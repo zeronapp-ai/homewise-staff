@@ -180,8 +180,8 @@ function Takvim() {
       console.log("İzin işlemi başlatılıyor:", { staff_id: staff.id, date: tarih, toggle });
 
       if (toggle) {
-        // İzin ekle
-        const { data, error } = await supabase.from("staff_leaves").insert({
+        // İzin ekle (upsert ile duplicate ignore et)
+        const { data, error } = await supabase.from("staff_leaves").upsert({
           staff_id: staff.id,
           date: tarih,
         });
