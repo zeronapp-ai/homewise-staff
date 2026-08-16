@@ -155,9 +155,9 @@ function Takvim() {
     const tarih = `${yil}-${String(ay + 1).padStart(2, "0")}-${String(g).padStart(2, "0")}`;
     // Her gün seçildiğinde, o güne ait randevuları filtrele
     const gunuRandevular = randevuDetaylari.filter((a) => a.appointment_date === tarih && a.status === 'pending');
-    // Scroll paneli aşağıya alıp randevuları göster (burada state güncelle)
-    // Toggle: sadece izin verme işlemi için, başlangıçta false olsun
-    setToggle(false);
+    // Toggle: eğer o gün izinli ise true, değilse false
+    const isizinli = izinler.includes(tarih);
+    setToggle(isizinli);
   };
 
   const kaydet = async () => {
