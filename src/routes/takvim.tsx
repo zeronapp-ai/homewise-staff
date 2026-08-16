@@ -152,12 +152,8 @@ function Takvim() {
   const gunSec = (g: number) => {
     setUyari(false);
     setSecili(g);
-    const tarih = `${yil}-${String(ay + 1).padStart(2, "0")}-${String(g).padStart(2, "0")}`;
-    // Her gün seçildiğinde, o güne ait randevuları filtrele
-    const gunuRandevular = randevuDetaylari.filter((a) => a.appointment_date === tarih && a.status === 'pending');
-    // Toggle: eğer o gün izinli ise true, değilse false
-    const isizinli = izinler.includes(tarih);
-    setToggle(isizinli);
+    // Toggle'ı reset et - kullanıcı tarafından açılacak
+    setToggle(false);
   };
 
   const kaydet = async () => {
