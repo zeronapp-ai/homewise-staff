@@ -152,8 +152,14 @@ function Takvim() {
   const gunSec = (g: number) => {
     setUyari(false);
     setSecili(g);
-    // Toggle'ı reset et - kullanıcı tarafından açılacak
-    setToggle(false);
+    // Toggle state'ini localStorage'dan oku - mevcut durum
+    const tarih = `${yil}-${String(ay + 1).padStart(2, "0")}-${String(g).padStart(2, "0")}`;
+    const isizinli = izinler.includes(tarih);
+    setToggle(isizinli);
+  };
+
+  const handleToggle = () => {
+    setToggle((prev) => !prev);
   };
 
   const kaydet = async () => {
@@ -347,7 +353,7 @@ function Takvim() {
                               role="switch"
                               aria-checked={toggle}
                               aria-label="İzin durumu"
-                              onClick={() => setToggle((v) => !v)}
+                              onClick={handleToggle}
                               className={
                                 "relative h-7 w-12 rounded-full transition-colors duration-300 " +
                                 (toggle ? "bg-primary" : "bg-border")
