@@ -161,25 +161,40 @@ function Takvim() {
   };
 
   const kaydet = async () => {
-    if (secili === null || !staff) return;
+    if (secili === null || !staff) {
+      console.error("Seçili gün veya staff bilgisi eksik");
+      return;
+    }
 
     try {
       const tarih = `${yil}-${String(ay + 1).padStart(2, "0")}-${String(secili).padStart(2, "0")}`;
+      console.log("İzin işlemi başlatılıyor:", { staff_id: staff.id, date: tarih, toggle });
 
       if (toggle) {
         // İzin ekle
-        await supabase.from("staff_leaves").insert({
+        const { data, error } = await supabase.from("staff_leaves").insert({
           staff_id: staff.id,
           date: tarih,
         });
+        if (error) {
+          console.error("İzin ekleme hatası:", error);
+          return;
+        }
+        console.log("İzin eklendi:", data);
       } else {
         // İzin kaldır
-        await supabase.from("staff_leaves").delete().eq("staff_id", staff.id).eq("date", tarih);
+        const { data, error } = await supabase.from("staff_leaves").delete().eq("staff_id", staff.id).eq("date", tarih);
+        if (error) {
+          console.error("İzin silme hatası:", error);
+          return;
+        }
+        console.log("İzin silindi:", data);
       }
 
       setSecili(null);
+      setToggle(false);
     } catch (error) {
-      console.error("İzin işlemi başarısız:", error);
+      console.error("İzin işlemi başarısız (catch):", error);
     }
   };
 
