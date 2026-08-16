@@ -263,7 +263,8 @@ function Takvim() {
               ))}
               {Array.from({ length: gunSayisi }).map((_, i) => {
                 const g = i + 1;
-                const izinli = izinler.includes(`${anahtar}-${g}`);
+                const tarihStr = `${yil}-${String(ay + 1).padStart(2, "0")}-${String(g).padStart(2, "0")}`;
+                const izinli = izinler.includes(tarihStr);
                 const dolu = randevulu.includes(g);
                 return (
                   <button
