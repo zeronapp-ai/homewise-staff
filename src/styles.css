@@ -1,0 +1,184 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+/*
+ * Homewise — mobil PWA tasarım sistemi (yalnızca açık tema).
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-surface: var(--surface);
+}
+
+:root {
+  --radius: 0.75rem;
+  --background: oklch(0.985 0.003 285);
+  --foreground: oklch(0.19 0.045 280);
+  --surface: oklch(0.965 0.006 285);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.19 0.045 280);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.19 0.045 280);
+  --primary: oklch(0.50 0.25 15);
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-soft: oklch(0.94 0.08 15);
+  --secondary: oklch(0.965 0.006 285);
+  --secondary-foreground: oklch(0.19 0.045 280);
+  --muted: oklch(0.965 0.006 285);
+  --muted-foreground: oklch(0.55 0.02 285);
+  --accent: oklch(0.94 0.08 15);
+  --accent-foreground: oklch(0.50 0.25 15);
+  --success: oklch(0.58 0.16 150);
+  --success-foreground: oklch(0.99 0 0);
+  --success-soft: oklch(0.94 0.05 150);
+  --destructive: oklch(0.6 0.19 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --destructive-soft: oklch(0.95 0.04 25);
+  --warning: oklch(0.8 0.15 90);
+  --border: oklch(0.92 0.008 285);
+  --input: oklch(0.92 0.008 285);
+  --ring: oklch(0.50 0.25 15);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@utility shadow-card {
+  box-shadow: 0 4px 20px -8px oklch(0.50 0.25 15 / 0.18);
+}
+
+@utility shadow-float {
+  box-shadow: 0 8px 24px -6px oklch(0.50 0.25 15 / 0.4);
+}
+
+/* ---- Hareket / animasyon sistemi ---- */
+
+@keyframes hw-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hw-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  60% {
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes hw-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hw-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 oklch(0.6 0.19 25 / 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 8px oklch(0.6 0.19 25 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 oklch(0.6 0.19 25 / 0);
+  }
+}
+
+@utility animate-fade-up {
+  animation: hw-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility animate-pop {
+  animation: hw-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility animate-slide-in {
+  animation: hw-slide-in 0.35s ease-out both;
+}
+
+@utility animate-pulse-ring {
+  animation: hw-pulse-ring 2s ease-out infinite;
+}
+
+@utility tap {
+  transition:
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
