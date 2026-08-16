@@ -3,5 +3,9 @@
   "installCommand": "npm install",
   "env": {
     "NITRO_PRESET": "node-server"
-  }
+  },
+  "buildEnv": [
+    "VITE_SUPABASE_URL",
+    "VITE_SUPABASE_ANON_KEY"
+  ]
 }
