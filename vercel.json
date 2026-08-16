@@ -1,11 +1,4 @@
 {
   "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "env": {
-    "NITRO_PRESET": "node-server"
-  },
-  "buildEnv": [
-    "VITE_SUPABASE_URL",
-    "VITE_SUPABASE_PUBLISHABLE_KEY"
-  ]
+  "installCommand": "npm install"
 }
