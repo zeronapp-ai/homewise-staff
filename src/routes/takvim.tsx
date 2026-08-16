@@ -163,6 +163,12 @@ function Takvim() {
     setToggle((prev) => !prev);
   };
 
+  useEffect(() => {
+    if (secili === null) return;
+    const tarih = `${yil}-${String(ay + 1).padStart(2, "0")}-${String(secili).padStart(2, "0")}`;
+    setToggle(izinler.includes(tarih));
+  }, [izinler, secili, ay, yil]);
+
   const kaydet = async () => {
     if (secili === null || !staff) {
       console.error("Seçili gün veya staff bilgisi eksik");
