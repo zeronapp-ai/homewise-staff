@@ -180,16 +180,18 @@ function Takvim() {
       console.log("İzin işlemi başlatılıyor:", { staff_id: staff.id, date: tarih, toggle });
 
       if (toggle) {
-        // İzin ekle (upsert ile duplicate ignore et)
-        const { data, error } = await supabase.from("staff_leaves").upsert({
+        // İzin ekle (duplicate constraint error'ı ignore et)
+        const { data, error } = await supabase.from("staff_leaves").insert({
           staff_id: staff.id,
           date: tarih,
         });
-        if (error) {
+        console.log("Insert response:", { data, error, code: error?.code });
+        // Duplicate key error (23505) ignore et, başka error'lar report et
+        if (error && error.code !== '23505') {
           console.error("İzin ekleme hatası:", error);
           return;
         }
-        console.log("İzin eklendi:", data);
+        console.log("İzin eklendi");
       } else {
         // İzin kaldır
         const { data, error } = await supabase.from("staff_leaves").delete().eq("staff_id", staff.id).eq("date", tarih);
@@ -198,6 +200,20 @@ function Takvim() {
           return;
         }
         console.log("İzin silindi:", data);
+      }
+
+      // Realtime subscription tetiklenmediyse manual refetch et
+      const { data: leaves, error: leavesError } = await supabase
+        .from("staff_leaves")
+        .select("date")
+        .eq("staff_id", staff.id)
+        .gte("date", `${yil}-${String(ay + 1).padStart(2, "0")}-01`)
+        .lt("date", `${yil}-${String(ay + 2).padStart(2, "0")}-01`);
+
+      if (!leavesError) {
+        const leavesList = (leaves || []).map((l) => l.date);
+        setIzinler(leavesList);
+        console.log("İzinler refetch'i tamamlandı:", leavesList);
       }
 
       setSecili(null);
