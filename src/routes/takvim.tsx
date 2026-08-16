@@ -155,6 +155,7 @@ function Takvim() {
     // Toggle state'ini localStorage'dan oku - mevcut durum
     const tarih = `${yil}-${String(ay + 1).padStart(2, "0")}-${String(g).padStart(2, "0")}`;
     const isizinli = izinler.includes(tarih);
+    console.log("gunSec debug:", { tarih, isizinli, izinlerCount: izinler.length, izinler });
     setToggle(isizinli);
   };
 
