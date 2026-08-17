@@ -56,6 +56,8 @@ function Randevular() {
   const [bekleyen, setBekleyen] = useState<Randevu[]>([]);
   const [biten, setBiten] = useState<Randevu[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bekleyenGoster, setBekleyenGoster] = useState(10);
+  const [bitenGoster, setBitenGoster] = useState(10);
 
   useEffect(() => {
     if (authLoading || !staff) return;
@@ -103,7 +105,10 @@ function Randevular() {
     }
   };
 
-  const liste = sekme === "bekliyor" ? bekleyen : biten;
+  const fullListe = sekme === "bekliyor" ? bekleyen : biten;
+  const gosterilecekSayisi = sekme === "bekliyor" ? bekleyenGoster : bitenGoster;
+  const liste = fullListe.slice(0, gosterilecekSayisi);
+  const dahahaVarMi = fullListe.length > gosterilecekSayisi;
 
   if (loading || authLoading) {
     return (
@@ -148,7 +153,11 @@ function Randevular() {
             <button
               key={k}
               type="button"
-              onClick={() => setSekme(k)}
+              onClick={() => {
+                setSekme(k);
+                setBekleyenGoster(10);
+                setBitenGoster(10);
+              }}
               className={
                 "tap flex-1 rounded-full py-2.5 text-sm font-semibold " +
                 (sekme === k
@@ -271,6 +280,21 @@ function Randevular() {
               </article>
             );
           })}
+
+          {dahahaVarMi && (
+            <button
+              onClick={() => {
+                if (sekme === "bekliyor") {
+                  setBekleyenGoster((p) => p + 10);
+                } else {
+                  setBitenGoster((p) => p + 10);
+                }
+              }}
+              className="tap col-span-full rounded-2xl bg-primary-soft py-3 text-center text-sm font-bold text-primary hover:brightness-95 lg:col-span-2"
+            >
+              Daha Fazla Göre ({fullListe.length - gosterilecekSayisi} kalan)
+            </button>
+          )}
         </section>
       </Panels>
     </PhoneShell>
