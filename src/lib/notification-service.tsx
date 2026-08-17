@@ -69,6 +69,36 @@ export type PushDurumu =
   | { ok: false; sebep: string };
 
 /**
+ * Cihazin push kurulumunda nerede takildigini veritabanina yazar. Telefonda
+ * konsol acilamadigi icin teshis bilgisi baska turlu disari cikmiyor.
+ */
+async function teshisYaz(staffId: number | null, durum: PushDurumu) {
+  try {
+    let swKayitli = false;
+    let swHazir = false;
+    if ("serviceWorker" in navigator) {
+      swKayitli = (await navigator.serviceWorker.getRegistrations()).length > 0;
+      swHazir = !!navigator.serviceWorker.controller;
+    }
+
+    await supabase.from("push_diagnostics").insert({
+      staff_id: staffId,
+      izin: "Notification" in window ? Notification.permission : "API yok",
+      sw_kayitli: swKayitli,
+      sw_hazir: swHazir,
+      vapid_var: !!VAPID_PUBLIC_KEY,
+      push_destek: "PushManager" in window,
+      standalone: anaEkrandanMiAcildi(),
+      sonuc: durum.ok ? "basarili" : "basarisiz",
+      sebep: durum.ok ? null : durum.sebep,
+      user_agent: navigator.userAgent,
+    });
+  } catch {
+    /* teshis yazilamazsa asil akis etkilenmemeli */
+  }
+}
+
+/**
  * Cihazi Web Push'a abone eder ve aboneligi veritabanina yazar. Bu sayede
  * uygulama tamamen kapaliyken bile sunucu bildirim gonderebilir.
  *
@@ -76,6 +106,12 @@ export type PushDurumu =
  * sessiz kalmamali, arayuzde gosterilebilmeli.
  */
 export async function pushAboneligiKur(staffId: number): Promise<PushDurumu> {
+  const durum = await pushAboneligiKurIc(staffId);
+  await teshisYaz(staffId, durum);
+  return durum;
+}
+
+async function pushAboneligiKurIc(staffId: number): Promise<PushDurumu> {
   if (!VAPID_PUBLIC_KEY) {
     return { ok: false, sebep: "VITE_VAPID_PUBLIC_KEY tanimli degil (Vercel env + yeniden deploy gerekiyor)" };
   }
@@ -179,6 +215,12 @@ export function NotificationService() {
       // cagirmak izni kalici olarak yakabilir. Orada butona birakiyoruz.
       Notification.requestPermission().then((izin) => {
         if (izin === "granted") pushAboneligiKur(staffId);
+        else teshisYaz(staffId, { ok: false, sebep: `izin istendi, sonuc: ${izin}` });
+      });
+    } else {
+      teshisYaz(staffId, {
+        ok: false,
+        sebep: `izin durumu: ${Notification.permission} (otomatik istenmedi)`,
       });
     }
 
