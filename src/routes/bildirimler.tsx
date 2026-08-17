@@ -1,5 +1,5 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   CheckCheck,
@@ -89,7 +89,6 @@ function Bildirimler() {
   const [liste, setListe] = useState<Bildirim[]>([]);
   const [loading, setLoading] = useState(true);
   const [notificationStatus, setNotificationStatus] = useState<'default' | 'granted' | 'denied'>('default');
-  const prevListRef = useRef<Bildirim[]>([]);
   const okunmamis = liste.filter((b) => !b.okundu).length;
 
   // Tarayıcı bildirimi izni kontrol et ve request et
@@ -142,23 +141,8 @@ function Bildirimler() {
           };
         });
 
+        // Tarayıcı bildirimini NotificationService (root) yönetiyor, burada tekrar gösterme
         setListe(bildirimler);
-
-        // Yeni okunmayan bildirimler için tarayıcı bildirimi göster
-        if ('Notification' in window && Notification.permission === 'granted') {
-          const newBildirimler = bildirimler.filter(b =>
-            !b.okundu && !prevListRef.current.find(pb => pb.appointment_id === b.appointment_id)
-          );
-          newBildirimler.forEach(b => {
-            new Notification(b.baslik, {
-              body: b.metin,
-              icon: 'https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121',
-              tag: b.appointment_id,
-            });
-          });
-        }
-
-        prevListRef.current = bildirimler;
       } catch (error) {
         console.error("Bildirimler yüklenemedi:", error);
         setListe([]);
@@ -184,7 +168,7 @@ function Bildirimler() {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [staff, authLoading]);
 
   if (authLoading || loading) {
     return (
