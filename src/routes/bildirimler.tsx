@@ -11,7 +11,11 @@ import {
 import { PhoneShell, ScreenHeader, IconButton, Panels } from "@/components/PhoneShell";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { pushAboneligiKur, iosAnaEkranaEklemeliMi } from "@/lib/notification-service";
+import {
+  pushAboneligiKur,
+  iosAnaEkranaEklemeliMi,
+  type PushDurumu,
+} from "@/lib/notification-service";
 
 export const Route = createFileRoute("/bildirimler")({
   head: () => ({
@@ -91,6 +95,7 @@ function Bildirimler() {
   const [loading, setLoading] = useState(true);
   const [notificationStatus, setNotificationStatus] = useState<'default' | 'granted' | 'denied'>('default');
   const [iosKurulumGerek, setIosKurulumGerek] = useState(false);
+  const [pushDurum, setPushDurum] = useState<PushDurumu | null>(null);
   const okunmamis = liste.filter((b) => !b.okundu).length;
 
   // Izin durumunu oku. Izin istemeyi NotificationService (root) yonetiyor,
@@ -99,8 +104,13 @@ function Bildirimler() {
     setIosKurulumGerek(iosAnaEkranaEklemeliMi());
     if ('Notification' in window) {
       setNotificationStatus(Notification.permission as any);
+      // Bu cihaz push'a gercekten kayitli mi? Telefonda konsol acilamadigi icin
+      // sonucu ekranda gosteriyoruz.
+      if (Notification.permission === 'granted' && staff) {
+        pushAboneligiKur(staff.id).then(setPushDurum);
+      }
     }
-  }, []);
+  }, [staff]);
 
   const requestNotificationPermission = async () => {
     if ('Notification' in window) {
@@ -108,7 +118,7 @@ function Bildirimler() {
       setNotificationStatus(permission as any);
       // Izin verilir verilmez cihazi push'a abone et, uygulama kapaliyken de bildirim gelsin
       if (permission === 'granted' && staff) {
-        await pushAboneligiKur(staff.id);
+        setPushDurum(await pushAboneligiKur(staff.id));
       }
     }
   };
@@ -123,7 +133,9 @@ function Bildirimler() {
           .from("appointments")
           .select("*")
           .eq("staff_id", staff.id)
-          .order("appointment_date", { ascending: false });
+          // Bildirim akisi randevunun ne zaman OLUSTURULDUGUNA gore siralanir;
+          // randevu tarihine gore siralamak yeni gelen talebi listenin dibine atiyordu
+          .order("created_at", { ascending: false });
 
         if (error) throw error;
 
@@ -253,6 +265,30 @@ function Bildirimler() {
               🔔 Bildirimleri Aç
             </button>
           ) : null}
+
+          {pushDurum && (
+            <div
+              className={
+                "mt-3 animate-fade-up rounded-xl p-3 text-[11px] " +
+                (pushDurum.ok
+                  ? "bg-success-soft text-success"
+                  : "bg-destructive-soft text-destructive")
+              }
+            >
+              {pushDurum.ok ? (
+                <p className="font-semibold">
+                  📱 Bu cihaz kayıtlı — uygulama kapalıyken de bildirim gelir
+                </p>
+              ) : (
+                <>
+                  <p className="font-semibold">
+                    ⚠️ Uygulama kapalıyken bildirim gelmez
+                  </p>
+                  <p className="mt-1 opacity-90">{pushDurum.sebep}</p>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="mt-4 space-y-3">
             {liste.map((b, i) => {

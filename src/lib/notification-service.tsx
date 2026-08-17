@@ -64,14 +64,27 @@ function bufferToBase64Url(buffer: ArrayBuffer | null) {
   return btoa(ikili).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+export type PushDurumu =
+  | { ok: true }
+  | { ok: false; sebep: string };
+
 /**
  * Cihazi Web Push'a abone eder ve aboneligi veritabanina yazar. Bu sayede
  * uygulama tamamen kapaliyken bile sunucu bildirim gonderebilir.
+ *
+ * Basarisizlik sebebini dondurur: telefonda konsola bakilamadigi icin hata
+ * sessiz kalmamali, arayuzde gosterilebilmeli.
  */
-export async function pushAboneligiKur(staffId: number) {
-  if (!VAPID_PUBLIC_KEY) return;
-  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
-  if (Notification.permission !== "granted") return;
+export async function pushAboneligiKur(staffId: number): Promise<PushDurumu> {
+  if (!VAPID_PUBLIC_KEY) {
+    return { ok: false, sebep: "VITE_VAPID_PUBLIC_KEY tanimli degil (Vercel env + yeniden deploy gerekiyor)" };
+  }
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    return { ok: false, sebep: "Bu tarayici Web Push desteklemiyor" };
+  }
+  if (!("Notification" in window) || Notification.permission !== "granted") {
+    return { ok: false, sebep: "Bildirim izni verilmemis" };
+  }
 
   try {
     const kayit = await navigator.serviceWorker.ready;
@@ -84,9 +97,11 @@ export async function pushAboneligiKur(staffId: number) {
 
     const p256dh = bufferToBase64Url(abonelik.getKey("p256dh"));
     const auth = bufferToBase64Url(abonelik.getKey("auth"));
-    if (!p256dh || !auth) return;
+    if (!p256dh || !auth) {
+      return { ok: false, sebep: "Abonelik anahtarlari okunamadi" };
+    }
 
-    await supabase.from("push_subscriptions").upsert(
+    const { error } = await supabase.from("push_subscriptions").upsert(
       {
         staff_id: staffId,
         endpoint: abonelik.endpoint,
@@ -97,8 +112,12 @@ export async function pushAboneligiKur(staffId: number) {
       },
       { onConflict: "endpoint" }
     );
+
+    if (error) return { ok: false, sebep: `Veritabanina yazilamadi: ${error.message}` };
+    return { ok: true };
   } catch (e) {
     console.error("Push aboneligi kurulamadi:", e);
+    return { ok: false, sebep: String((e as Error)?.message ?? e) };
   }
 }
 
@@ -159,7 +178,7 @@ export function NotificationService() {
         .from("appointments")
         .select("id, service, address, appointment_date, appointment_time, status, read_by_staff")
         .eq("staff_id", staffId)
-        .order("appointment_date", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (iptal || error || !data) return;
 
