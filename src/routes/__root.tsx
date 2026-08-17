@@ -126,14 +126,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
-        console.error('Service Worker registration failed:', err);
-      });
-    }
-  }, []);
-
+  // DIKKAT: shellComponent yalnizca sunucuda HTML belgesini uretir, istemcide
+  // hydrate EDILMEZ. Buraya useEffect koymak tarayicida hic calismaz.
   return (
     <html lang="en">
       <head>
@@ -149,6 +143,16 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Service worker kaydi istemcide calisan bir bilesende olmali; push
+  // aboneligi aktif bir service worker olmadan kurulamaz.
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.error('Service Worker registration failed:', err);
+      });
+    }
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
