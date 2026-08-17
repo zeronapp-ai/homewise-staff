@@ -88,15 +88,19 @@ function Bildirimler() {
   const { staff, isLoading: authLoading } = useAuth();
   const [liste, setListe] = useState<Bildirim[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [notificationStatus, setNotificationStatus] = useState<'default' | 'granted' | 'denied'>('default');
   const prevListRef = useRef<Bildirim[]>([]);
   const okunmamis = liste.filter((b) => !b.okundu).length;
 
-  // Tarayıcı bildirimi izni kontrol et
+  // Tarayıcı bildirimi izni kontrol et ve request et
   useEffect(() => {
     if ('Notification' in window) {
       setNotificationStatus(Notification.permission as any);
+      if (Notification.permission === 'default') {
+        Notification.requestPermission().then((permission) => {
+          setNotificationStatus(permission as any);
+        });
+      }
     }
   }, []);
 
@@ -104,7 +108,6 @@ function Bildirimler() {
     if ('Notification' in window) {
       const permission = await Notification.requestPermission();
       setNotificationStatus(permission as any);
-      console.log('Bildirim izni:', permission);
     }
   };
 
@@ -139,15 +142,13 @@ function Bildirimler() {
           };
         });
 
-        // İlk load değilse yeni okunmayan bildirimler için tarayıcı bildirimi göster
-        console.log('fetchBildirimler çalışıyor - isInitialLoad:', isInitialLoad, 'Notification izni:', 'Notification' in window ? Notification.permission : 'yok');
-        if (!isInitialLoad && 'Notification' in window && Notification.permission === 'granted') {
+        // Yeni okunmayan bildirimler için tarayıcı bildirimi göster
+        // prevListRef'te olmayan yeni bildirimler detection
+        if ('Notification' in window && Notification.permission === 'granted' && prevListRef.current.length > 0) {
           const newBildirimler = bildirimler.filter(b =>
             !b.okundu && !prevListRef.current.find(pb => pb.appointment_id === b.appointment_id)
           );
-          console.log('Yeni bildirimler:', newBildirimler.length, newBildirimler);
           newBildirimler.forEach(b => {
-            console.log('Notification gösteriliyor:', b.baslik, b.metin);
             new Notification(b.baslik, {
               body: b.metin,
               icon: 'https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121',
@@ -158,7 +159,6 @@ function Bildirimler() {
 
         setListe(bildirimler);
         prevListRef.current = bildirimler;
-        if (isInitialLoad) setIsInitialLoad(false);
       } catch (error) {
         console.error("Bildirimler yüklenemedi:", error);
         setListe([]);
