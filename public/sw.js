@@ -1,4 +1,4 @@
-const CACHE_NAME = 'homewise-v2';
+const CACHE_NAME = 'homewise-v3';
 const IKON = 'https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121';
 const urlsToCache = [
   '/',
@@ -92,8 +92,26 @@ self.addEventListener('fetch', (event) => {
           });
         })
     );
+  } else if (event.request.mode === 'navigate') {
+    // Sayfa istekleri network-first olmali. Cache-first yapilirsa cihaz eski
+    // HTML kabugunu sonsuza kadar servis eder, o da eski hash'li paketleri
+    // cagirir ve kullanici yeni surumu hic goremez.
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const kopya = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, kopya));
+          return response;
+        })
+        .catch(() =>
+          caches
+            .match(event.request)
+            .then((response) => response || caches.match('/'))
+            .then((response) => response || new Response('Offline', { status: 503 }))
+        )
+    );
   } else {
-    // For assets, use cache-first strategy
+    // Hash'li statik dosyalar degismez, cache-first uygun
     event.respondWith(
       caches.match(event.request).then((response) => {
         if (response) {
