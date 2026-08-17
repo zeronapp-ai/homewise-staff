@@ -89,16 +89,23 @@ function Bildirimler() {
   const [liste, setListe] = useState<Bildirim[]>([]);
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [notificationStatus, setNotificationStatus] = useState<'default' | 'granted' | 'denied'>('default');
   const okunmamis = liste.filter((b) => !b.okundu).length;
 
-  // Tarayıcı bildirimi izni iste
+  // Tarayıcı bildirimi izni kontrol et
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().then(permission => {
-        console.log('Bildirim izni:', permission);
-      });
+    if ('Notification' in window) {
+      setNotificationStatus(Notification.permission as any);
     }
   }, []);
+
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      setNotificationStatus(permission as any);
+      console.log('Bildirim izni:', permission);
+    }
+  };
 
   useEffect(() => {
     if (authLoading || !staff) return;
@@ -222,6 +229,16 @@ function Bildirimler() {
               ? `${okunmamis} okunmamış bildirim`
               : "Tüm bildirimleri okudunuz"}
           </p>
+
+          {notificationStatus !== 'granted' && (
+            <button
+              type="button"
+              onClick={requestNotificationPermission}
+              className="mt-3 animate-fade-up rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+            >
+              🔔 Tarayıcı Bildirimlerini Aç
+            </button>
+          )}
 
           <div className="mt-4 space-y-3">
             {liste.map((b, i) => {
