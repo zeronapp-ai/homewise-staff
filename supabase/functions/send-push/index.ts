@@ -5,6 +5,7 @@
 //   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, PUSH_HOOK_SECRET
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { Buffer } from "node:buffer";
 
 const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
@@ -39,7 +40,7 @@ type Randevu = {
 
 function govdeOlustur(r: Randevu) {
   const tarih = new Date(r.appointment_date).toLocaleDateString("tr-TR");
-  const saat = r.appointment_time || "Belirtilmemis";
+  const saat = r.appointment_time || "Belirtilmemiş";
   return `${r.service || "Hizmet"} · ${tarih} ${saat} · ${r.address || "Adres yok"}`;
 }
 
@@ -94,13 +95,18 @@ Deno.serve(async (req) => {
     return Response.json({ sent: 0, reason: "no subscriptions" });
   }
 
-  const yuk = JSON.stringify({
-    title: "Yeni randevu atandi",
-    body: govdeOlustur(randevu),
-    tag: randevu.id,
-    icon: IKON,
-    url: "/bildirimler",
-  });
+  // Turkce karakterler icin yuku UTF-8 bayt olarak gonder. Duz string
+  // verildiginde kutuphane latin-1 varsayabiliyor ve "ı, ş, ğ" bozuluyor.
+  const yuk = Buffer.from(
+    JSON.stringify({
+      title: "Yeni randevu atandı",
+      body: govdeOlustur(randevu),
+      tag: randevu.id,
+      icon: IKON,
+      url: "/bildirimler",
+    }),
+    "utf-8",
+  );
 
   let gonderilen = 0;
   const olenAbonelikler: string[] = [];
