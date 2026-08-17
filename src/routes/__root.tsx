@@ -113,8 +113,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
-      { rel: "apple-touch-icon", href: "/data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23D7263D' width='192' height='192' rx='40'/><text x='96' y='96' font-size='100' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>H</text></svg>" },
+      { rel: "icon", href: "https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121", type: "image/png" },
+      { rel: "apple-touch-icon", href: "https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121" },
     ],
   }),
 
