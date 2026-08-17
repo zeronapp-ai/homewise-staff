@@ -80,8 +80,17 @@ function Dashboard() {
         const now = new Date();
         const currentYear = now.getFullYear();
         const currentMonth = now.getMonth();
+
+        // Haftanın başlangıcını (Pazartesi) hesapla
         const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - now.getDay());
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Pazar=0 ise -6, diğerleri +1
+        weekStart.setDate(diff);
+        weekStart.setHours(0, 0, 0, 0);
+
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        weekEnd.setHours(23, 59, 59, 999);
 
         // Calculate month data
         const monthAppointments = (appointments || []).filter((a: Appointment) => {
@@ -92,10 +101,12 @@ function Dashboard() {
         const monthIncome = monthAppointments.reduce((sum: number, a: Appointment) => sum + (parseFloat(a.total_price as any) || 0), 0);
         const monthCommission = Math.ceil(monthIncome * 0.15);
 
-        // Calculate week data
+        // Calculate week data (haftanın başlangıcından sonuna kadar)
         const weekAppointments = (appointments || []).filter((a: Appointment) => {
           const appDate = new Date(a.appointment_date);
-          return appDate >= weekStart && appDate <= now;
+          const result = appDate >= weekStart && appDate <= weekEnd;
+          console.log("Week filter:", { tarih: a.appointment_date, appDate, weekStart, weekEnd, result });
+          return result;
         });
 
         const weekIncome = weekAppointments.reduce((sum: number, a: Appointment) => sum + (parseFloat(a.total_price as any) || 0), 0);
@@ -111,13 +122,13 @@ function Dashboard() {
             gelir: weekIncome,
             komisyon: weekCommission,
             net: weekIncome - weekCommission,
-            randevu: weekAppointments.filter((a: Appointment) => a.status === 'completed').length,
+            randevu: weekAppointments.length,
           },
           ay: {
             gelir: monthIncome,
             komisyon: monthCommission,
             net: monthIncome - monthCommission,
-            randevu: monthAppointments.filter((a: Appointment) => a.status === 'completed').length,
+            randevu: monthAppointments.length,
           },
         });
 
