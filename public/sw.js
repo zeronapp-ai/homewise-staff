@@ -1,4 +1,5 @@
-const CACHE_NAME = 'homewise-v1';
+const CACHE_NAME = 'homewise-v2';
+const IKON = 'https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -27,6 +28,45 @@ self.addEventListener('activate', (event) => {
     })
   );
   self.clients.claim();
+});
+
+// Sunucudan gelen push: uygulama kapaliyken de bildirim gosterir
+self.addEventListener('push', (event) => {
+  let veri = {};
+  try {
+    veri = event.data ? event.data.json() : {};
+  } catch (e) {
+    veri = { body: event.data ? event.data.text() : '' };
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(veri.title || 'Homewise', {
+      body: veri.body || '',
+      icon: veri.icon || IKON,
+      badge: veri.icon || IKON,
+      tag: veri.tag,
+      requireInteraction: true,
+      data: { url: veri.url || '/bildirimler' }
+    })
+  );
+});
+
+// Bildirime tiklayinca uygulamayi ac / one getir
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const hedef = (event.notification.data && event.notification.data.url) || '/bildirimler';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((pencereler) => {
+      for (const pencere of pencereler) {
+        if ('focus' in pencere) {
+          if ('navigate' in pencere) pencere.navigate(hedef);
+          return pencere.focus();
+        }
+      }
+      return clients.openWindow(hedef);
+    })
+  );
 });
 
 self.addEventListener('fetch', (event) => {

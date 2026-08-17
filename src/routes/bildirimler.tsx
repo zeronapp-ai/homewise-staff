@@ -11,6 +11,7 @@ import {
 import { PhoneShell, ScreenHeader, IconButton, Panels } from "@/components/PhoneShell";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
+import { pushAboneligiKur } from "@/lib/notification-service";
 
 export const Route = createFileRoute("/bildirimler")({
   head: () => ({
@@ -107,6 +108,10 @@ function Bildirimler() {
     if ('Notification' in window) {
       const permission = await Notification.requestPermission();
       setNotificationStatus(permission as any);
+      // Izin verilir verilmez cihazi push'a abone et, uygulama kapaliyken de bildirim gelsin
+      if (permission === 'granted' && staff) {
+        await pushAboneligiKur(staff.id);
+      }
     }
   };
 

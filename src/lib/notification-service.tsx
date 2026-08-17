@@ -18,6 +18,63 @@ type Randevu = {
 const bildirilenKey = (staffId: number) => `bildirilen_randevular_${staffId}`;
 const kurulumKey = (staffId: number) => `bildirim_kurulumu_${staffId}`;
 
+const VAPID_PUBLIC_KEY = import.meta.env['VITE_VAPID_PUBLIC_KEY'] as string | undefined;
+
+function base64UrlToUint8Array(base64Url: string) {
+  const padding = "=".repeat((4 - (base64Url.length % 4)) % 4);
+  const base64 = (base64Url + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const ham = atob(base64);
+  const cikti = new Uint8Array(ham.length);
+  for (let i = 0; i < ham.length; i++) cikti[i] = ham.charCodeAt(i);
+  return cikti;
+}
+
+function bufferToBase64Url(buffer: ArrayBuffer | null) {
+  if (!buffer) return "";
+  const bytes = new Uint8Array(buffer);
+  let ikili = "";
+  for (const bayt of bytes) ikili += String.fromCharCode(bayt);
+  return btoa(ikili).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+/**
+ * Cihazi Web Push'a abone eder ve aboneligi veritabanina yazar. Bu sayede
+ * uygulama tamamen kapaliyken bile sunucu bildirim gonderebilir.
+ */
+export async function pushAboneligiKur(staffId: number) {
+  if (!VAPID_PUBLIC_KEY) return;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+  if (Notification.permission !== "granted") return;
+
+  try {
+    const kayit = await navigator.serviceWorker.ready;
+    const abonelik =
+      (await kayit.pushManager.getSubscription()) ??
+      (await kayit.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: base64UrlToUint8Array(VAPID_PUBLIC_KEY),
+      }));
+
+    const p256dh = bufferToBase64Url(abonelik.getKey("p256dh"));
+    const auth = bufferToBase64Url(abonelik.getKey("auth"));
+    if (!p256dh || !auth) return;
+
+    await supabase.from("push_subscriptions").upsert(
+      {
+        staff_id: staffId,
+        endpoint: abonelik.endpoint,
+        p256dh,
+        auth,
+        user_agent: navigator.userAgent,
+        last_seen_at: new Date().toISOString(),
+      },
+      { onConflict: "endpoint" }
+    );
+  } catch (e) {
+    console.error("Push aboneligi kurulamadi:", e);
+  }
+}
+
 function metinOlustur(r: Randevu) {
   const tarih = new Date(r.appointment_date).toLocaleDateString("tr-TR");
   const saat = r.appointment_time || "Belirtilmemiş";
@@ -59,7 +116,11 @@ export function NotificationService() {
     };
 
     if (Notification.permission === "default") {
-      Notification.requestPermission();
+      Notification.requestPermission().then((izin) => {
+        if (izin === "granted") pushAboneligiKur(staffId);
+      });
+    } else if (Notification.permission === "granted") {
+      pushAboneligiKur(staffId);
     }
 
     let iptal = false;
