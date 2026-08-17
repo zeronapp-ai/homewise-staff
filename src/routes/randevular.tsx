@@ -174,12 +174,12 @@ function Randevular() {
         </div>
       </div>
 
-      <Panels className="mt-5 lg:mt-8">
-        <section className="space-y-4 px-5 lg:col-span-12 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0 lg:px-0">
+      <Panels className="mt-4 lg:mt-8">
+        <section className="space-y-2 px-4 lg:col-span-12 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 lg:px-0">
           {liste.length === 0 && (
-            <div className="animate-pop py-16 text-center lg:col-span-2">
-              <CalendarX2 className="mx-auto h-10 w-10 text-muted-foreground" />
-              <p className="mt-3 text-sm text-muted-foreground">
+            <div className="animate-pop py-12 text-center lg:col-span-2">
+              <CalendarX2 className="mx-auto h-8 w-8 text-muted-foreground" />
+              <p className="mt-2 text-xs text-muted-foreground">
                 {sekme === "bekliyor"
                   ? "Şu an bekleyen randevunuz yok"
                   : "Henüz tamamlanmış randevunuz yok"}
@@ -190,63 +190,55 @@ function Randevular() {
           {liste.map((r, i) => {
             const tarih = new Date(r.appointment_date).toLocaleDateString("tr-TR", {
               day: "2-digit",
-              month: "long",
+              month: "short",
               year: "numeric",
             });
 
             return (
               <article
                 key={r.id}
-                className="animate-fade-up rounded-2xl bg-card p-5 shadow-card transition-transform hover:-translate-y-0.5 lg:p-6"
-                style={{ animationDelay: `${i * 70}ms` }}
+                className="animate-fade-up rounded-lg bg-card p-3 shadow-card transition-transform hover:-translate-y-0.5"
+                style={{ animationDelay: `${i * 50}ms` }}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h2 className="truncate text-base font-bold">{r.service}</h2>
-                    <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <CalendarClock className="h-3.5 w-3.5 shrink-0" />
-                      {tarih} · {r.appointment_time}
+                    <h2 className="truncate text-xs font-bold">{r.service}</h2>
+                    <p className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <CalendarClock className="h-3 w-3 shrink-0" />
+                      {tarih} {r.appointment_time}
                     </p>
                   </div>
                   {sekme === "tamamlandi" ? (
-                    <span className="flex h-8 w-8 shrink-0 animate-pop items-center justify-center rounded-full bg-success-soft text-success">
-                      <Check className="h-4 w-4" strokeWidth={3} />
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
+                      <Check className="h-3 w-3" strokeWidth={3} />
                     </span>
                   ) : (
-                    <span className="shrink-0 rounded-full bg-primary-soft px-3 py-1 text-xs font-bold text-primary">
+                    <span className="shrink-0 whitespace-nowrap rounded-full bg-primary-soft px-2 py-0.5 text-[10px] font-bold text-primary">
                       {tl(r.total_price)}
                     </span>
                   )}
                 </div>
 
-                <p className="mt-3 flex items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
-                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  {r.address}
+                <p className="mt-1.5 flex items-start gap-1 text-[10px] leading-tight text-muted-foreground">
+                  <MapPin className="mt-0.5 h-2.5 w-2.5 shrink-0" />
+                  <span className="line-clamp-2">{r.address}</span>
                 </p>
 
                 {r.notes && (
-                  <p className="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
-                    <StickyNote className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                    {r.notes}
+                  <p className="mt-1 flex items-start gap-1 text-[10px] leading-tight text-muted-foreground">
+                    <StickyNote className="mt-0.5 h-2.5 w-2.5 shrink-0" />
+                    <span className="line-clamp-1">{r.notes}</span>
                   </p>
                 )}
 
-                {r.user_phone ? (
+                {r.user_phone && (
                   <a
                     href={`tel:${r.user_phone.replace(/\s/g, "")}`}
-                    className="tap mt-3 flex items-center gap-2 rounded-xl bg-primary-soft px-3 py-2.5 text-sm font-bold text-primary hover:brightness-95"
+                    className="tap mt-1.5 flex items-center gap-1.5 rounded-lg bg-primary-soft px-2 py-1.5 text-[10px] font-bold text-primary hover:brightness-95"
                   >
-                    <Phone className="h-4 w-4 shrink-0" />
-                    {r.user_phone}
-                    <span className="ml-auto text-[11px] font-semibold opacity-70">
-                      Aramak için dokun
-                    </span>
+                    <Phone className="h-3 w-3 shrink-0" />
+                    <span className="flex-1 truncate">{r.user_phone}</span>
                   </a>
-                ) : (
-                  <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Phone className="h-3.5 w-3.5 shrink-0" />
-                    Telefon numarası kayıtlı değil
-                  </p>
                 )}
 
                 {sekme === "bekliyor" ? (
@@ -262,19 +254,19 @@ function Randevular() {
                         type="button"
                         onClick={() => tamamla(r)}
                         disabled={!canComplete}
-                        className={`tap mt-4 w-full rounded-xl py-3 text-sm font-bold transition-opacity ${
+                        className={`tap mt-2 w-full rounded-lg py-2 text-[11px] font-bold transition-opacity ${
                           canComplete
                             ? "bg-success text-success-foreground hover:brightness-105"
                             : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
                         }`}
                       >
-                        {canComplete ? "Tamamlandı Olarak İşaretle" : "Randevu tarihi gelmedi"}
+                        {canComplete ? "Tamamlandı" : "Tarihi gelmedi"}
                       </button>
                     );
                   })()
                 ) : (
-                  <p className="mt-4 flex items-center gap-1.5 text-sm font-bold text-success">
-                    <BanknoteArrowUp className="h-4 w-4" /> Kazanç: {tl(r.total_price)}
+                  <p className="mt-2 flex items-center gap-1 text-[11px] font-bold text-success">
+                    <BanknoteArrowUp className="h-3 w-3" /> {tl(r.total_price)}
                   </p>
                 )}
               </article>
@@ -290,7 +282,7 @@ function Randevular() {
                   setBitenGoster((p) => p + 10);
                 }
               }}
-              className="tap col-span-full rounded-2xl bg-primary-soft py-3 text-center text-sm font-bold text-primary hover:brightness-95 lg:col-span-2"
+              className="tap col-span-full rounded-lg bg-primary-soft py-2 text-center text-xs font-bold text-primary hover:brightness-95 lg:col-span-2"
             >
               Daha Fazla Göre ({fullListe.length - gosterilecekSayisi} kalan)
             </button>
