@@ -122,36 +122,41 @@ async function teshisYaz(staffId: number | null, durum: PushDurumu) {
  * yutulmamali, cagirana aynen iletilmeli.
  */
 async function serviceWorkerHazirla(): Promise<ServiceWorkerRegistration> {
-  let kayit = await navigator.serviceWorker.getRegistration("/");
-
-  if (!kayit) {
-    kayit = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-  }
-
+  // register() zaten kayitliysa mevcut kaydi doner. getRegistration'a
+  // guvenmiyoruz: uc worker slotu da bos bir kayit donebiliyor.
+  const kayit = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
   if (kayit.active) return kayit;
 
-  const bekleyen = kayit.installing ?? kayit.waiting;
-  if (!bekleyen) {
-    throw new Error("Service worker kaydi var ama aktif/kurulan worker yok");
-  }
-
-  await new Promise<void>((cozul, reddet) => {
-    const zamanAsimi = setTimeout(
-      () => reddet(new Error(`Service worker 20 sn icinde aktiflesmedi (durum: ${bekleyen.state})`)),
-      20000
-    );
+  const aktiflesmeyiBekle = new Promise<void>((cozul, reddet) => {
     const dinle = () => {
-      if (bekleyen.state === "activated") {
-        clearTimeout(zamanAsimi);
-        cozul();
-      } else if (bekleyen.state === "redundant") {
-        clearTimeout(zamanAsimi);
-        reddet(new Error("Service worker kurulumu basarisiz oldu (redundant)"));
+      const worker = kayit.installing ?? kayit.waiting ?? kayit.active;
+      if (!worker) return; // slotlar henuz bos, updatefound'u bekle
+      if (worker.state === "activated") return cozul();
+      if (worker.state === "redundant") {
+        return reddet(new Error("Service worker kurulumu basarisiz oldu (redundant)"));
       }
+      worker.addEventListener("statechange", dinle, { once: true });
     };
-    bekleyen.addEventListener("statechange", dinle);
+    kayit.addEventListener("updatefound", dinle);
     dinle();
   });
+
+  await Promise.race([
+    aktiflesmeyiBekle,
+    // ready, aktif worker olustugu anda cozulur; slotlar bos kaldiginda yedek
+    navigator.serviceWorker.ready.then(() => undefined),
+    new Promise<never>((_, reddet) =>
+      setTimeout(
+        () =>
+          reddet(
+            new Error(
+              `Service worker 20 sn icinde aktiflesmedi (active:${!!kayit.active} installing:${!!kayit.installing} waiting:${!!kayit.waiting})`
+            )
+          ),
+        20000
+      )
+    ),
+  ]);
 
   return kayit;
 }
@@ -173,9 +178,21 @@ async function pushAboneligiKurIc(staffId: number): Promise<PushDurumu> {
     return { ok: false, sebep: "Bildirim izni verilmemis" };
   }
 
+  let hazirlamaNotu = "";
+  let kayit: ServiceWorkerRegistration | undefined;
   try {
-    const kayit = await serviceWorkerHazirla();
+    kayit = await serviceWorkerHazirla();
+  } catch (e) {
+    // Aktiflesmeyi bekleyemedik; yine de eldeki kayitla abonelik denenmeli.
+    // subscribe() aktif worker olmadan da basarili olabiliyor.
+    hazirlamaNotu = String((e as Error)?.message ?? e);
+    kayit = (await navigator.serviceWorker.getRegistration("/")) ?? undefined;
+    if (!kayit) {
+      return { ok: false, sebep: `Service worker hazirlanamadi: ${hazirlamaNotu}` };
+    }
+  }
 
+  try {
     const abonelik =
       (await kayit.pushManager.getSubscription()) ??
       (await kayit.pushManager.subscribe({
@@ -205,7 +222,11 @@ async function pushAboneligiKurIc(staffId: number): Promise<PushDurumu> {
     return { ok: true };
   } catch (e) {
     console.error("Push aboneligi kurulamadi:", e);
-    return { ok: false, sebep: String((e as Error)?.message ?? e) };
+    const asilHata = `${(e as Error)?.name ?? ""} ${(e as Error)?.message ?? String(e)}`.trim();
+    return {
+      ok: false,
+      sebep: hazirlamaNotu ? `${asilHata} | SW notu: ${hazirlamaNotu}` : asilHata,
+    };
   }
 }
 
