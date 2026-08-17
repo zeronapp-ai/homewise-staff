@@ -8,6 +8,8 @@ import {
   CalendarClock,
   BanknoteArrowUp,
   CalendarX2,
+  Phone,
+  StickyNote,
 } from "lucide-react";
 import { PhoneShell, ScreenHeader, IconButton, Panels } from "@/components/PhoneShell";
 import { supabase } from "@/lib/supabase";
@@ -41,6 +43,8 @@ type Randevu = {
   address: string;
   status: string;
   total_price: number | null;
+  user_phone: string | null;
+  notes: string | null;
 };
 
 const tl = (n: number | null) => "₺" + (n || 0).toLocaleString("tr-TR");
@@ -210,6 +214,31 @@ function Randevular() {
                   <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   {r.address}
                 </p>
+
+                {r.notes && (
+                  <p className="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
+                    <StickyNote className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    {r.notes}
+                  </p>
+                )}
+
+                {r.user_phone ? (
+                  <a
+                    href={`tel:${r.user_phone.replace(/\s/g, "")}`}
+                    className="tap mt-3 flex items-center gap-2 rounded-xl bg-primary-soft px-3 py-2.5 text-sm font-bold text-primary hover:brightness-95"
+                  >
+                    <Phone className="h-4 w-4 shrink-0" />
+                    {r.user_phone}
+                    <span className="ml-auto text-[11px] font-semibold opacity-70">
+                      Aramak için dokun
+                    </span>
+                  </a>
+                ) : (
+                  <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Phone className="h-3.5 w-3.5 shrink-0" />
+                    Telefon numarası kayıtlı değil
+                  </p>
+                )}
 
                 {sekme === "bekliyor" ? (
                   (() => {

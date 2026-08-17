@@ -7,6 +7,7 @@ import {
   Clock3,
   Wallet,
   Receipt,
+  Phone,
 } from "lucide-react";
 import { PhoneShell, Panels } from "@/components/PhoneShell";
 import { supabase } from "@/lib/supabase";
@@ -153,6 +154,7 @@ function Dashboard() {
             zaman: new Date(a.appointment_date).toLocaleDateString('tr-TR'),
             tutar: a.total_price || 0,
             semt: a.address || 'Adres yok',
+            telefon: (a as any).user_phone || null,
           }))
         );
       } catch (error) {
@@ -365,6 +367,16 @@ function Dashboard() {
                       <p className="truncate text-xs text-muted-foreground">
                         {r.zaman} · {r.semt}
                       </p>
+                      {r.telefon && (
+                        <a
+                          href={`tel:${String(r.telefon).replace(/\s/g, "")}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                        >
+                          <Phone className="h-3 w-3 shrink-0" />
+                          {r.telefon}
+                        </a>
+                      )}
                     </div>
                   </div>
                   <p className="shrink-0 text-sm font-bold text-success">+{tl(r.tutar)}</p>
