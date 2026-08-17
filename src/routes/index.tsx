@@ -140,9 +140,9 @@ function Dashboard() {
           randevu: monthAppointments.filter((a: Appointment) => a.status === 'completed' || a.status?.toLowerCase() === 'completed').length,
         });
 
-        // Get upcoming appointments
+        // Get upcoming appointments (only pending/awaiting)
         const upcomingAppointments = (appointments || [])
-          .filter((a: Appointment) => new Date(a.appointment_date) >= now)
+          .filter((a: Appointment) => new Date(a.appointment_date) >= now && (a.status === 'pending' || a.status === null))
           .slice(0, 3);
 
         setYaklasan(
