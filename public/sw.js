@@ -1,16 +1,27 @@
-const CACHE_NAME = 'homewise-v3';
+const CACHE_NAME = 'homewise-v4';
 const IKON = 'https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121';
+
+// DIKKAT: Burada olmayan bir adres birakma. cache.addAll tek bir istek bile
+// basarisiz olursa TUMUYLE reddeder; bu da install olayini cokertir, worker
+// "redundant" olur ve kayit silinir. Bu uygulama SSR oldugu icin /index.html
+// yok, listede oldugu surece hicbir cihazda service worker aktif olamiyordu.
 const urlsToCache = [
   '/',
-  '/index.html',
   '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      // Tek tek ekle ve hatayi yut: eksik bir dosya kurulumu asla cokertmesin
+      Promise.all(
+        urlsToCache.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn('[sw] onbellege alinamadi, atlaniyor:', url, err);
+          })
+        )
+      )
+    )
   );
   self.skipWaiting();
 });
