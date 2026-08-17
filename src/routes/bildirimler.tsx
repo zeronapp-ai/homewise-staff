@@ -142,9 +142,10 @@ function Bildirimler() {
           };
         });
 
+        setListe(bildirimler);
+
         // Yeni okunmayan bildirimler için tarayıcı bildirimi göster
-        // prevListRef'te olmayan yeni bildirimler detection
-        if ('Notification' in window && Notification.permission === 'granted' && prevListRef.current.length > 0) {
+        if ('Notification' in window && Notification.permission === 'granted') {
           const newBildirimler = bildirimler.filter(b =>
             !b.okundu && !prevListRef.current.find(pb => pb.appointment_id === b.appointment_id)
           );
@@ -157,7 +158,6 @@ function Bildirimler() {
           });
         }
 
-        setListe(bildirimler);
         prevListRef.current = bildirimler;
       } catch (error) {
         console.error("Bildirimler yüklenemedi:", error);
