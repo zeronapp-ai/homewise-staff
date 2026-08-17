@@ -140,11 +140,14 @@ function Bildirimler() {
         });
 
         // İlk load değilse yeni okunmayan bildirimler için tarayıcı bildirimi göster
+        console.log('fetchBildirimler çalışıyor - isInitialLoad:', isInitialLoad, 'Notification izni:', 'Notification' in window ? Notification.permission : 'yok');
         if (!isInitialLoad && 'Notification' in window && Notification.permission === 'granted') {
           const newBildirimler = bildirimler.filter(b =>
             !b.okundu && !prevListRef.current.find(pb => pb.appointment_id === b.appointment_id)
           );
+          console.log('Yeni bildirimler:', newBildirimler.length, newBildirimler);
           newBildirimler.forEach(b => {
+            console.log('Notification gösteriliyor:', b.baslik, b.metin);
             new Notification(b.baslik, {
               body: b.metin,
               icon: 'https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121',
