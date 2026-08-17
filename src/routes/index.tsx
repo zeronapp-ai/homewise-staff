@@ -146,7 +146,7 @@ function Dashboard() {
         // Get upcoming appointments (only pending/awaiting)
         const upcomingAppointments = (appointments || [])
           .filter((a: Appointment) => new Date(a.appointment_date) >= now && (a.status === 'pending' || a.status === null))
-          .slice(0, 3);
+          .slice(0, 5);
 
         setYaklasan(
           upcomingAppointments.map((a: Appointment) => ({
