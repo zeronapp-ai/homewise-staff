@@ -11,7 +11,7 @@ import {
 import { PhoneShell, ScreenHeader, IconButton, Panels } from "@/components/PhoneShell";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
-import { pushAboneligiKur } from "@/lib/notification-service";
+import { pushAboneligiKur, iosAnaEkranaEklemeliMi } from "@/lib/notification-service";
 
 export const Route = createFileRoute("/bildirimler")({
   head: () => ({
@@ -90,17 +90,15 @@ function Bildirimler() {
   const [liste, setListe] = useState<Bildirim[]>([]);
   const [loading, setLoading] = useState(true);
   const [notificationStatus, setNotificationStatus] = useState<'default' | 'granted' | 'denied'>('default');
+  const [iosKurulumGerek, setIosKurulumGerek] = useState(false);
   const okunmamis = liste.filter((b) => !b.okundu).length;
 
-  // Tarayıcı bildirimi izni kontrol et ve request et
+  // Izin durumunu oku. Izin istemeyi NotificationService (root) yonetiyor,
+  // burada tekrar istemiyoruz ki iki ayri prompt cakismasin.
   useEffect(() => {
+    setIosKurulumGerek(iosAnaEkranaEklemeliMi());
     if ('Notification' in window) {
       setNotificationStatus(Notification.permission as any);
-      if (Notification.permission === 'default') {
-        Notification.requestPermission().then((permission) => {
-          setNotificationStatus(permission as any);
-        });
-      }
     }
   }, []);
 
@@ -226,15 +224,35 @@ function Bildirimler() {
               : "Tüm bildirimleri okudunuz"}
           </p>
 
-          {notificationStatus !== 'granted' && (
+          {iosKurulumGerek ? (
+            <div className="mt-3 animate-fade-up rounded-xl bg-primary-soft p-4 text-xs text-foreground">
+              <p className="font-bold">📲 iPhone'da bildirim almak için</p>
+              <p className="mt-1 text-muted-foreground">
+                iPhone yalnızca ana ekrana eklenmiş uygulamalara bildirim gönderebilir.
+              </p>
+              <ol className="mt-2 list-decimal space-y-1 pl-4 text-muted-foreground">
+                <li>Safari'de alttaki <span className="font-semibold">Paylaş</span> düğmesine dokun</li>
+                <li><span className="font-semibold">Ana Ekrana Ekle</span>'yi seç</li>
+                <li>Uygulamayı <span className="font-semibold">ana ekrandaki simgeden</span> aç</li>
+                <li>Bu sayfaya gel ve bildirimlere izin ver</li>
+              </ol>
+            </div>
+          ) : notificationStatus === 'denied' ? (
+            <div className="mt-3 animate-fade-up rounded-xl bg-destructive-soft p-4 text-xs text-foreground">
+              <p className="font-bold">🔕 Bildirimler engellenmiş</p>
+              <p className="mt-1 text-muted-foreground">
+                Tarayıcı ayarlarından bu site için bildirim iznini “İzin ver” yapman gerekiyor.
+              </p>
+            </div>
+          ) : notificationStatus !== 'granted' ? (
             <button
               type="button"
               onClick={requestNotificationPermission}
               className="mt-3 animate-fade-up rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
             >
-              🔔 Tarayıcı Bildirimlerini Aç
+              🔔 Bildirimleri Aç
             </button>
-          )}
+          ) : null}
 
           <div className="mt-4 space-y-3">
             {liste.map((b, i) => {

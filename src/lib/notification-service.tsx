@@ -20,6 +20,33 @@ const kurulumKey = (staffId: number) => `bildirim_kurulumu_${staffId}`;
 
 const VAPID_PUBLIC_KEY = import.meta.env['VITE_VAPID_PUBLIC_KEY'] as string | undefined;
 
+/** iPhone / iPad / iPod (masaustu Safari degil) */
+export function iosCihazMi() {
+  if (typeof navigator === "undefined") return false;
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    // iPadOS kendini Mac gibi tanitir, dokunmatik varsa iPad'dir
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+}
+
+/** Uygulama ana ekrandan (PWA olarak) mi acilmis? */
+export function anaEkrandanMiAcildi() {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as { standalone?: boolean }).standalone === true
+  );
+}
+
+/**
+ * iOS'ta Web Push yalnizca uygulama ana ekrana eklenip oradan acildiginda
+ * calisir; normal Safari sekmesinde Notification API hic tanimli degildir.
+ */
+export function iosAnaEkranaEklemeliMi() {
+  return iosCihazMi() && !anaEkrandanMiAcildi();
+}
+
 function base64UrlToUint8Array(base64Url: string) {
   const padding = "=".repeat((4 - (base64Url.length % 4)) % 4);
   const base64 = (base64Url + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -115,12 +142,14 @@ export function NotificationService() {
       }
     };
 
-    if (Notification.permission === "default") {
+    if (Notification.permission === "granted") {
+      pushAboneligiKur(staffId);
+    } else if (Notification.permission === "default" && !iosCihazMi()) {
+      // iOS izin istegini yalnizca kullanici dokunusundan kabul eder; otomatik
+      // cagirmak izni kalici olarak yakabilir. Orada butona birakiyoruz.
       Notification.requestPermission().then((izin) => {
         if (izin === "granted") pushAboneligiKur(staffId);
       });
-    } else if (Notification.permission === "granted") {
-      pushAboneligiKur(staffId);
     }
 
     let iptal = false;
