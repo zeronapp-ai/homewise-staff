@@ -247,6 +247,21 @@ function Bildirimler() {
             </button>
           )}
 
+          {notificationStatus === 'granted' && (
+            <button
+              type="button"
+              onClick={() => {
+                new Notification('Test Bildirim', {
+                  body: 'Bu bir test bildirimidir',
+                  icon: 'https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121',
+                });
+              }}
+              className="mt-3 animate-fade-up rounded-lg bg-success px-4 py-2 text-xs font-semibold text-success-foreground hover:bg-success/90"
+            >
+              🧪 Test Bildirim Gönder
+            </button>
+          )}
+
           <div className="mt-4 space-y-3">
             {liste.map((b, i) => {
               const Icon = ikonlar[b.tip];
