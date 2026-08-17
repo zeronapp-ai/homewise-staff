@@ -193,12 +193,28 @@ async function pushAboneligiKurIc(staffId: number): Promise<PushDurumu> {
   }
 
   try {
-    const abonelik =
-      (await kayit.pushManager.getSubscription()) ??
-      (await kayit.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: base64UrlToUint8Array(VAPID_PUBLIC_KEY),
-      }));
+    // "AbortError: push service error" cogu zaman gecicidir (FCM'e anlik
+    // ulasamama). Birkac kez, araliklari acarak dene.
+    let abonelik = await kayit.pushManager.getSubscription();
+    let sonHata: unknown = null;
+
+    for (let deneme = 1; !abonelik && deneme <= 3; deneme++) {
+      try {
+        abonelik = await kayit.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: base64UrlToUint8Array(VAPID_PUBLIC_KEY),
+        });
+      } catch (e) {
+        sonHata = e;
+        if (deneme < 3) await new Promise((r) => setTimeout(r, deneme * 2000));
+      }
+    }
+
+    if (!abonelik) {
+      const ad = (sonHata as Error)?.name ?? "";
+      const mesaj = (sonHata as Error)?.message ?? String(sonHata);
+      return { ok: false, sebep: `3 denemede abone olunamadi: ${ad} ${mesaj}`.trim() };
+    }
 
     const p256dh = bufferToBase64Url(abonelik.getKey("p256dh"));
     const auth = bufferToBase64Url(abonelik.getKey("auth"));
