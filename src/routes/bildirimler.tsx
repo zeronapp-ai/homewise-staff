@@ -139,7 +139,7 @@ function Bildirimler() {
             id: idx,
             appointment_id: apt.id,
             tip: tip as keyof typeof ikonlar,
-            baslik: tip === "completed" ? "Randevu tamamlandı" : "Yeni randevu atandı",
+            baslik: tip === "onay" ? "Randevu tamamlandı" : "Yeni randevu atandı",
             metin: `${apt.service} · ${tarih} ${saat} · ${apt.address}`,
             zaman: "Yeni",
             okundu: apt.read_by_staff || apt.status === "completed",
@@ -233,21 +233,6 @@ function Bildirimler() {
               className="mt-3 animate-fade-up rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
             >
               🔔 Tarayıcı Bildirimlerini Aç
-            </button>
-          )}
-
-          {notificationStatus === 'granted' && (
-            <button
-              type="button"
-              onClick={() => {
-                new Notification('Test Bildirim', {
-                  body: 'Bu bir test bildirimidir',
-                  icon: 'https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121',
-                });
-              }}
-              className="mt-3 animate-fade-up rounded-lg bg-success px-4 py-2 text-xs font-semibold text-success-foreground hover:bg-success/90"
-            >
-              🧪 Test Bildirim Gönder
             </button>
           )}
 

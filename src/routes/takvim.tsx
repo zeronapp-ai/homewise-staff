@@ -152,11 +152,8 @@ function Takvim() {
   const gunSec = (g: number) => {
     setUyari(false);
     setSecili(g);
-    // Toggle state'ini localStorage'dan oku - mevcut durum
     const tarih = `${yil}-${String(ay + 1).padStart(2, "0")}-${String(g).padStart(2, "0")}`;
-    const isizinli = izinler.includes(tarih);
-    console.log("gunSec debug:", { tarih, isizinli, izinlerCount: izinler.length, izinler });
-    setToggle(isizinli);
+    setToggle(izinler.includes(tarih));
   };
 
   const handleToggle = () => {
@@ -177,29 +174,25 @@ function Takvim() {
 
     try {
       const tarih = `${yil}-${String(ay + 1).padStart(2, "0")}-${String(secili).padStart(2, "0")}`;
-      console.log("İzin işlemi başlatılıyor:", { staff_id: staff.id, date: tarih, toggle });
 
       if (toggle) {
         // İzin ekle (duplicate constraint error'ı ignore et)
-        const { data, error } = await supabase.from("staff_leaves").insert({
+        const { error } = await supabase.from("staff_leaves").insert({
           staff_id: staff.id,
           date: tarih,
         });
-        console.log("Insert response:", { data, error, code: error?.code });
         // Duplicate key error (23505) ignore et, başka error'lar report et
         if (error && error.code !== '23505') {
           console.error("İzin ekleme hatası:", error);
           return;
         }
-        console.log("İzin eklendi");
       } else {
         // İzin kaldır
-        const { data, error } = await supabase.from("staff_leaves").delete().eq("staff_id", staff.id).eq("date", tarih);
+        const { error } = await supabase.from("staff_leaves").delete().eq("staff_id", staff.id).eq("date", tarih);
         if (error) {
           console.error("İzin silme hatası:", error);
           return;
         }
-        console.log("İzin silindi:", data);
       }
 
       // Realtime subscription tetiklenmediyse manual refetch et
@@ -211,9 +204,7 @@ function Takvim() {
         .lt("date", `${yil}-${String(ay + 2).padStart(2, "0")}-01`);
 
       if (!leavesError) {
-        const leavesList = (leaves || []).map((l) => l.date);
-        setIzinler(leavesList);
-        console.log("İzinler refetch'i tamamlandı:", leavesList);
+        setIzinler((leaves || []).map((l) => l.date));
       }
 
       setSecili(null);
