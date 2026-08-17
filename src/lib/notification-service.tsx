@@ -87,7 +87,18 @@ export async function pushAboneligiKur(staffId: number): Promise<PushDurumu> {
   }
 
   try {
-    const kayit = await navigator.serviceWorker.ready;
+    // serviceWorker.ready aktif bir SW yoksa SONSUZA KADAR bekler ve hicbir
+    // hata firlatmaz; o durumda kullanici bos ekrana bakip kalir.
+    const kayit = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise<never>((_, reddet) =>
+        setTimeout(
+          () => reddet(new Error("Service worker 10 sn icinde hazir olmadi")),
+          10000
+        )
+      ),
+    ]);
+
     const abonelik =
       (await kayit.pushManager.getSubscription()) ??
       (await kayit.pushManager.subscribe({

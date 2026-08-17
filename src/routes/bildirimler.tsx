@@ -102,13 +102,24 @@ function Bildirimler() {
   // burada tekrar istemiyoruz ki iki ayri prompt cakismasin.
   useEffect(() => {
     setIosKurulumGerek(iosAnaEkranaEklemeliMi());
-    if ('Notification' in window) {
-      setNotificationStatus(Notification.permission as any);
-      // Bu cihaz push'a gercekten kayitli mi? Telefonda konsol acilamadigi icin
-      // sonucu ekranda gosteriyoruz.
-      if (Notification.permission === 'granted' && staff) {
-        pushAboneligiKur(staff.id).then(setPushDurum);
-      }
+
+    if (!('Notification' in window)) {
+      setPushDurum({ ok: false, sebep: 'Bu tarayıcı bildirim API’sini desteklemiyor' });
+      return;
+    }
+
+    setNotificationStatus(Notification.permission as any);
+
+    // Bu cihaz push'a gercekten kayitli mi? Telefonda konsol acilamadigi icin
+    // sonucu her durumda ekranda gosteriyoruz.
+    if (!staff) return;
+    if (Notification.permission === 'granted') {
+      pushAboneligiKur(staff.id).then(setPushDurum);
+    } else {
+      setPushDurum({
+        ok: false,
+        sebep: `Bildirim izni: "${Notification.permission}" — izin verilmeden cihaz kaydedilemez`,
+      });
     }
   }, [staff]);
 
