@@ -68,6 +68,14 @@ export type PushDurumu =
   | { ok: true }
   | { ok: false; sebep: string };
 
+/** Service worker kaydi patlarsa hatayi teshis tablosuna yazar. */
+export async function swKayitHatasiBildir(hata: unknown) {
+  await teshisYaz(null, {
+    ok: false,
+    sebep: `SW register() hatasi: ${(hata as Error)?.name ?? ""} ${(hata as Error)?.message ?? String(hata)}`,
+  });
+}
+
 /**
  * Cihazin push kurulumunda nerede takildigini veritabanina yazar. Telefonda
  * konsol acilamadigi icin teshis bilgisi baska turlu disari cikmiyor.
@@ -105,6 +113,49 @@ async function teshisYaz(staffId: number | null, durum: PushDurumu) {
  * Basarisizlik sebebini dondurur: telefonda konsola bakilamadigi icin hata
  * sessiz kalmamali, arayuzde gosterilebilmeli.
  */
+/**
+ * Aktif bir service worker garanti eder. Kayit yoksa kendisi kaydeder ve
+ * aktiflesmesini bekler.
+ *
+ * navigator.serviceWorker.ready aktif worker yoksa sonsuza kadar bekler ve
+ * hata firlatmaz; bu yuzden ona guvenmiyoruz. Kayit sirasinda cikan hata da
+ * yutulmamali, cagirana aynen iletilmeli.
+ */
+async function serviceWorkerHazirla(): Promise<ServiceWorkerRegistration> {
+  let kayit = await navigator.serviceWorker.getRegistration("/");
+
+  if (!kayit) {
+    kayit = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  }
+
+  if (kayit.active) return kayit;
+
+  const bekleyen = kayit.installing ?? kayit.waiting;
+  if (!bekleyen) {
+    throw new Error("Service worker kaydi var ama aktif/kurulan worker yok");
+  }
+
+  await new Promise<void>((cozul, reddet) => {
+    const zamanAsimi = setTimeout(
+      () => reddet(new Error(`Service worker 20 sn icinde aktiflesmedi (durum: ${bekleyen.state})`)),
+      20000
+    );
+    const dinle = () => {
+      if (bekleyen.state === "activated") {
+        clearTimeout(zamanAsimi);
+        cozul();
+      } else if (bekleyen.state === "redundant") {
+        clearTimeout(zamanAsimi);
+        reddet(new Error("Service worker kurulumu basarisiz oldu (redundant)"));
+      }
+    };
+    bekleyen.addEventListener("statechange", dinle);
+    dinle();
+  });
+
+  return kayit;
+}
+
 export async function pushAboneligiKur(staffId: number): Promise<PushDurumu> {
   const durum = await pushAboneligiKurIc(staffId);
   await teshisYaz(staffId, durum);
@@ -123,17 +174,7 @@ async function pushAboneligiKurIc(staffId: number): Promise<PushDurumu> {
   }
 
   try {
-    // serviceWorker.ready aktif bir SW yoksa SONSUZA KADAR bekler ve hicbir
-    // hata firlatmaz; o durumda kullanici bos ekrana bakip kalir.
-    const kayit = await Promise.race([
-      navigator.serviceWorker.ready,
-      new Promise<never>((_, reddet) =>
-        setTimeout(
-          () => reddet(new Error("Service worker 10 sn icinde hazir olmadi")),
-          10000
-        )
-      ),
-    ]);
+    const kayit = await serviceWorkerHazirla();
 
     const abonelik =
       (await kayit.pushManager.getSubscription()) ??

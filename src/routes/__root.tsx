@@ -13,7 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider, useAuth } from "../lib/auth-context";
-import { NotificationService } from "../lib/notification-service";
+import { NotificationService, swKayitHatasiBildir } from "../lib/notification-service";
 
 function NotFoundComponent() {
   return (
@@ -148,8 +148,10 @@ function RootComponent() {
   // aboneligi aktif bir service worker olmadan kurulamaz.
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((err) => {
         console.error('Service Worker registration failed:', err);
+        // Telefonda konsol goremedigimiz icin hatayi disari cikar
+        void swKayitHatasiBildir(err);
       });
     }
   }, []);
