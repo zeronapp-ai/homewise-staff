@@ -1,5 +1,5 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   CheckCheck,
@@ -90,6 +90,7 @@ function Bildirimler() {
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [notificationStatus, setNotificationStatus] = useState<'default' | 'granted' | 'denied'>('default');
+  const prevListRef = useRef<Bildirim[]>([]);
   const okunmamis = liste.filter((b) => !b.okundu).length;
 
   // Tarayıcı bildirimi izni kontrol et
@@ -138,10 +139,12 @@ function Bildirimler() {
           };
         });
 
-        // İlk load değilse tarayıcı bildirimi göster (sadece okunmayan randevular)
+        // İlk load değilse yeni okunmayan bildirimler için tarayıcı bildirimi göster
         if (!isInitialLoad && 'Notification' in window && Notification.permission === 'granted') {
-          const okunmayan = bildirimler.filter(b => !b.okundu);
-          okunmayan.forEach(b => {
+          const newBildirimler = bildirimler.filter(b =>
+            !b.okundu && !prevListRef.current.find(pb => pb.appointment_id === b.appointment_id)
+          );
+          newBildirimler.forEach(b => {
             new Notification(b.baslik, {
               body: b.metin,
               icon: 'https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121',
@@ -151,6 +154,7 @@ function Bildirimler() {
         }
 
         setListe(bildirimler);
+        prevListRef.current = bildirimler;
         if (isInitialLoad) setIsInitialLoad(false);
       } catch (error) {
         console.error("Bildirimler yüklenemedi:", error);
