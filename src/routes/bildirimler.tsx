@@ -184,7 +184,7 @@ function Bildirimler() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [staff, authLoading]);
+  }, []);
 
   if (authLoading || loading) {
     return (
