@@ -88,7 +88,17 @@ function Bildirimler() {
   const { staff, isLoading: authLoading } = useAuth();
   const [liste, setListe] = useState<Bildirim[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const okunmamis = liste.filter((b) => !b.okundu).length;
+
+  // Tarayıcı bildirimi izni iste
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        console.log('Bildirim izni:', permission);
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (authLoading || !staff) return;
@@ -121,7 +131,20 @@ function Bildirimler() {
           };
         });
 
+        // İlk load değilse tarayıcı bildirimi göster (sadece okunmayan randevular)
+        if (!isInitialLoad && 'Notification' in window && Notification.permission === 'granted') {
+          const okunmayan = bildirimler.filter(b => !b.okundu);
+          okunmayan.forEach(b => {
+            new Notification(b.baslik, {
+              body: b.metin,
+              icon: 'https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121',
+              tag: b.appointment_id,
+            });
+          });
+        }
+
         setListe(bildirimler);
+        if (isInitialLoad) setIsInitialLoad(false);
       } catch (error) {
         console.error("Bildirimler yüklenemedi:", error);
         setListe([]);
