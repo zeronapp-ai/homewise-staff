@@ -98,46 +98,48 @@ function Dashboard() {
           return appDate.getFullYear() === currentYear && appDate.getMonth() === currentMonth;
         });
 
-        const monthIncome = monthAppointments.reduce((sum: number, a: Appointment) => sum + (parseFloat(a.total_price as any) || 0), 0);
+        // Only count completed appointments for income
+        const completedMonthAppointments = monthAppointments.filter((a: Appointment) => a.status === 'completed');
+        const monthIncome = completedMonthAppointments.reduce((sum: number, a: Appointment) => sum + (parseFloat(a.total_price as any) || 0), 0);
         const monthCommission = Math.ceil(monthIncome * 0.15);
 
         // Calculate week data (haftanın başlangıcından sonuna kadar)
         const weekAppointments = (appointments || []).filter((a: Appointment) => {
           const appDate = new Date(a.appointment_date);
-          const result = appDate >= weekStart && appDate <= weekEnd;
-          console.log("Week filter:", { tarih: a.appointment_date, appDate, weekStart, weekEnd, result });
-          return result;
+          return appDate >= weekStart && appDate <= weekEnd;
         });
 
-        const weekIncome = weekAppointments.reduce((sum: number, a: Appointment) => sum + (parseFloat(a.total_price as any) || 0), 0);
+        // Only count completed appointments for week income
+        const completedWeekAppointments = weekAppointments.filter((a: Appointment) => a.status === 'completed');
+        const weekIncome = completedWeekAppointments.reduce((sum: number, a: Appointment) => sum + (parseFloat(a.total_price as any) || 0), 0);
         const weekCommission = Math.ceil(weekIncome * 0.15);
 
-        // Calculate general (all-time) data - take ALL appointments regardless of status
-        const genelIncome = (appointments || []).reduce((sum: number, a: Appointment) => sum + (parseFloat(a.total_price as any) || 0), 0);
+        // Calculate general (all-time) data - only completed appointments count towards income
+        const completedAllAppointments = (appointments || []).filter((a: Appointment) => a.status === 'completed');
+        const genelIncome = completedAllAppointments.reduce((sum: number, a: Appointment) => sum + (parseFloat(a.total_price as any) || 0), 0);
         const genelCommission = Math.ceil(genelIncome * 0.15);
-        const completedAppointmentsCount = (appointments || []).filter((a: Appointment) => a.status === 'completed' || a.status?.toLowerCase() === 'completed').length;
 
         setVeri({
           hafta: {
             gelir: weekIncome,
             komisyon: weekCommission,
             net: weekIncome - weekCommission,
-            randevu: weekAppointments.length,
+            randevu: completedWeekAppointments.length,
           },
           ay: {
             gelir: monthIncome,
             komisyon: monthCommission,
             net: monthIncome - monthCommission,
-            randevu: monthAppointments.length,
+            randevu: completedMonthAppointments.length,
           },
         });
 
-        // For now, use month data as general (until RLS is fixed)
+        // General (all-time) data - only completed appointments
         setGenel({
-          gelir: monthIncome,
-          komisyon: monthCommission,
-          net: monthIncome - monthCommission,
-          randevu: monthAppointments.filter((a: Appointment) => a.status === 'completed' || a.status?.toLowerCase() === 'completed').length,
+          gelir: genelIncome,
+          komisyon: genelCommission,
+          net: genelIncome - genelCommission,
+          randevu: completedAllAppointments.length,
         });
 
         // Get upcoming appointments (only pending/awaiting)
