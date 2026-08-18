@@ -179,7 +179,7 @@ function RootComponent() {
 }
 
 function ProtectedLayout() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isInitializing } = useAuth();
   const router = useRouter();
   const location = useLocation();
 
@@ -188,12 +188,16 @@ function ProtectedLayout() {
   const isPublicPage = publicPages.some((p) => location.pathname.startsWith(p));
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && !isPublicPage) {
+    if (!isInitializing && !isAuthenticated && !isPublicPage) {
       router.navigate({ to: "/login" });
     }
-  }, [isAuthenticated, isLoading, isPublicPage, router]);
+  }, [isAuthenticated, isInitializing, isPublicPage, router]);
 
-  if (isLoading) {
+  // DIKKAT: Burada giris istegi suresince yukleme ekranina gecilmemeli.
+  // Gecilirse Login bileseni unmount olur ve hata mesaji kullaniciya hic
+  // gorunmeden kaybolur. Sadece kayitli oturum okunurken bekletiyoruz ve
+  // login gibi public sayfalari hic bekletmiyoruz.
+  if (isInitializing && !isPublicPage) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <p className="text-muted-foreground">Yükleniyor...</p>

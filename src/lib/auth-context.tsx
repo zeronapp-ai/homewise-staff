@@ -1,5 +1,5 @@
 ﻿import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, staffTokenAyarla, staffTokenAl } from '@/lib/supabase';
 
 type Staff = {
   id: number;
@@ -17,6 +17,9 @@ type Staff = {
 type AuthContextType = {
   staff: Staff | null;
   isAuthenticated: boolean;
+  /** Sayfa acilirken kayitli oturum okunuyor mu. Route korumasi bunu kullanmali. */
+  isInitializing: boolean;
+  /** Giris istegi surerken true. Sadece giris butonunu kilitlemek icin. */
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -26,7 +29,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [staff, setStaff] = useState<Staff | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // DIKKAT: Bu iki durum ayri tutulmali. Ikisi tek bir bayrakta birlestirilirse
+  // giris denemesi sirasinda korumali layout "Yukleniyor" ekranina gecip Login
+  // bilesenini unmount ediyor; boylece setError ile yazilan hata mesaji da
+  // bilesen ile birlikte yok oluyor ve kullanici neden giremedigini goremiyor.
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Oturum durumunu kontrol et
   useEffect(() => {
@@ -35,14 +43,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const sessionData = sessionStorage.getItem('staff_session');
         if (sessionData) {
           const { staff } = JSON.parse(sessionData);
-          if (staff) {
+          // Token olmadan randevu/izin sorgulari RLS'e takilip bos doner; bu
+          // durumda oturumu gecerli saymak yerine yeniden giris istiyoruz.
+          if (staff && staffTokenAl()) {
             setStaff(staff);
+          } else {
+            sessionStorage.removeItem('staff_session');
+            staffTokenAyarla(null);
           }
         }
       } catch (error) {
         console.error('Auth check failed:', error);
       } finally {
-        setIsLoading(false);
+        setIsInitializing(false);
       }
     };
 
@@ -71,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("Sunucuya ulaşılamadı: " + error.message);
       }
 
-      const sonuc = data as { status: string; staff?: Staff } | null;
+      const sonuc = data as { status: string; token?: string; staff?: Staff } | null;
 
       if (!sonuc) {
         throw new Error("Sunucudan yanıt alınamadı");
@@ -97,7 +110,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("Giriş başarısız (beklenmeyen yanıt: " + sonuc.status + ")");
       }
 
+      if (!sonuc.token) {
+        throw new Error("Oturum anahtarı alınamadı, tekrar deneyin");
+      }
+
       const staffData = sonuc.staff;
+
+      // Once token: bundan sonraki her sorgu bu personelin verisini gorebilsin.
+      staffTokenAyarla(sonuc.token);
 
       setStaff(staffData);
       sessionStorage.setItem('staff_session', JSON.stringify({ staffId: staffData.id, email, staff: staffData }));
@@ -109,8 +129,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    const token = staffTokenAl();
     setStaff(null);
     sessionStorage.removeItem('staff_session');
+    // Once yerel durumu temizle, sunucudaki oturumu bosuna beklemeden kapat.
+    staffTokenAyarla(null);
+    if (token) {
+      void supabase?.rpc('staff_logout', { p_token: token });
+    }
   };
 
   return (
@@ -118,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         staff,
         isAuthenticated: !!staff,
+        isInitializing,
         isLoading,
         login,
         logout,
