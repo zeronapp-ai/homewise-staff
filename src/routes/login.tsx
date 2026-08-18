@@ -1,5 +1,5 @@
 ﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { AlertCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -19,9 +19,11 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(async (e: React.FormEvent | Event) => {
+    if (e instanceof Event) e.preventDefault();
+    if (e instanceof React.SyntheticEvent) e.preventDefault();
     setError("");
 
     try {
@@ -30,16 +32,17 @@ function Login() {
     } catch (err: any) {
       setError(err.message || "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.");
     }
-  };
+  }, [email, password, login, navigate]);
 
   // SSR hydration mismatch için: form event listener'ı client-side attach et
   useEffect(() => {
-    const form = document.querySelector("form");
+    const form = formRef.current || document.querySelector("form");
     if (form) {
-      form.addEventListener("submit", handleSubmit as any);
-      return () => form.removeEventListener("submit", handleSubmit as any);
+      const handler = (e: Event) => handleSubmit(e);
+      form.addEventListener("submit", handler);
+      return () => form.removeEventListener("submit", handler);
     }
-  }, [email, password, handleSubmit]);
+  }, [handleSubmit]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-primary-foreground p-4">
@@ -50,7 +53,7 @@ function Login() {
             <p className="text-sm text-muted-foreground">Personel Paneline Giriş</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/30">
                 <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
