@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider, useAuth } from "../lib/auth-context";
 import { NotificationService, swKayitHatasiBildir } from "../lib/notification-service";
+import { PwaInstallBanner } from "../components/pwa-install";
 
 function NotFoundComponent() {
   return (
@@ -125,12 +126,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+const PWA_CAPTURE_SCRIPT = `
+  window.__pwaDeferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();
+    window.__pwaDeferredPrompt = e;
+    window.dispatchEvent(new Event("pwa-install-ready"));
+  });
+`;
+
 function RootShell({ children }: { children: ReactNode }) {
   // DIKKAT: shellComponent yalnizca sunucuda HTML belgesini uretir, istemcide
   // hydrate EDILMEZ. Buraya useEffect koymak tarayicida hic calismaz.
   return (
-    <html lang="en">
+    <html lang="tr">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: PWA_CAPTURE_SCRIPT }} />
         <HeadContent />
       </head>
       <body>
@@ -160,6 +171,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <NotificationService />
+        <PwaInstallBanner />
         <ProtectedLayout />
       </AuthProvider>
     </QueryClientProvider>

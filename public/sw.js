@@ -1,4 +1,4 @@
-const CACHE_NAME = 'homewise-v4';
+const CACHE_NAME = 'handyy-cache-v4';
 const IKON = 'https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121';
 
 // DIKKAT: Burada olmayan bir adres birakma. cache.addAll tek bir istek bile
