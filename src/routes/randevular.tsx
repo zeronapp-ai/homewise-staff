@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+﻿import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import {
   ArrowLeft,
@@ -18,13 +18,13 @@ import { useAuth } from "@/lib/auth-context";
 export const Route = createFileRoute("/randevular")({
   head: () => ({
     meta: [
-      { title: "Randevularım | Homewise" },
+      { title: "Randevularım | Handyy" },
       {
         name: "description",
         content:
           "Bekleyen ve tamamlanan temizlik randevularınızı görüntüleyin, işleri tamamlandı olarak işaretleyin.",
       },
-      { property: "og:title", content: "Randevularım | Homewise" },
+      { property: "og:title", content: "Randevularım | Handyy" },
       {
         property: "og:description",
         content: "Bekleyen ve tamamlanan randevularınızı yönetin.",

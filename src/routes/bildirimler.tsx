@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+﻿import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import {
   ArrowLeft,
@@ -20,13 +20,13 @@ import {
 export const Route = createFileRoute("/bildirimler")({
   head: () => ({
     meta: [
-      { title: "Bildirimler | Homewise" },
+      { title: "Bildirimler | Handyy" },
       {
         name: "description",
         content:
-          "Yeni randevu, komisyon ve müşteri değerlendirme bildirimlerinizi Homewise panelinden takip edin.",
+          "Yeni randevu, komisyon ve müşteri değerlendirme bildirimlerinizi Handyy panelinden takip edin.",
       },
-      { property: "og:title", content: "Bildirimler | Homewise" },
+      { property: "og:title", content: "Bildirimler | Handyy" },
       {
         property: "og:description",
         content: "Randevu, ödeme ve değerlendirme bildirimleriniz.",

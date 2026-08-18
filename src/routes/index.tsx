@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import {
   Bell,
@@ -17,13 +17,13 @@ import profilFoto from "@/assets/profil.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Homewise | Kazanç Paneli" },
+      { title: "Handyy | Kazanç Paneli" },
       {
         name: "description",
         content:
-          "Homewise temizlik personeli paneli: gelirinizi, ödenecek komisyonu ve net kalan tutarı tek ekranda görün.",
+          "Handyy temizlik personeli paneli: gelirinizi, ödenecek komisyonu ve net kalan tutarı tek ekranda görün.",
       },
-      { property: "og:title", content: "Homewise | Kazanç Paneli" },
+      { property: "og:title", content: "Handyy | Kazanç Paneli" },
       {
         property: "og:description",
         content: "Gelir, komisyon ve net kazancınızı takip edin.",

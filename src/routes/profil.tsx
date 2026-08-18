@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useRouter, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   ChevronRight,
@@ -19,13 +19,13 @@ import profilFoto from "@/assets/profil.jpg";
 export const Route = createFileRoute("/profil")({
   head: () => ({
     meta: [
-      { title: "Profilim | Homewise" },
+      { title: "Profilim | Handyy" },
       {
         name: "description",
         content:
-          "Homewise personel profiliniz: iletişim bilgileri, çalışma bölgesi, tamamlanan iş sayısı ve puanınız.",
+          "Handyy personel profiliniz: iletişim bilgileri, çalışma bölgesi, tamamlanan iş sayısı ve puanınız.",
       },
-      { property: "og:title", content: "Profilim | Homewise" },
+      { property: "og:title", content: "Profilim | Handyy" },
       {
         property: "og:description",
         content: "Kişisel bilgileriniz ve hesap ayarlarınız.",

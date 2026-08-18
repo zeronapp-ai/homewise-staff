@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 import { BottomNav } from "./BottomNav";
 
 /** Mobilde tek kolon telefon genişliği, geniş ekranlarda ferah panel düzeni. */

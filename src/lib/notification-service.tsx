@@ -1,9 +1,9 @@
-import { useEffect, useRef } from "react";
+﻿import { useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 
 const IKON =
-  "https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121";
+  "https://ik.imagekit.io/uiuf7hq8x/Handyystaff.png?updatedAt=1786916778121";
 
 type Randevu = {
   id: string;

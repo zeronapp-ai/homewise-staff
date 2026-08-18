@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { AlertCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -6,8 +6,8 @@ import { useAuth } from "@/lib/auth-context";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Giriş | Homewise" },
-      { name: "description", content: "Homewise personel paneline giriş yapın" },
+      { title: "Giriş | Handyy" },
+      { name: "description", content: "Handyy personel paneline giriş yapın" },
     ],
   }),
   component: Login,
@@ -37,7 +37,7 @@ function Login() {
       <div className="w-full max-w-md">
         <div className="bg-card rounded-2xl shadow-2xl p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Homewise</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Handyy</h1>
             <p className="text-sm text-muted-foreground">Personel Paneline Giriş</p>
           </div>
 
@@ -57,7 +57,7 @@ function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="example@homewise.com"
+                placeholder="example@Handyy.com"
                 className="w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />

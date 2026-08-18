@@ -1,4 +1,4 @@
-// Yeni randevu olustugunda ilgili personelin kayitli cihazlarina Web Push gonderir.
+﻿// Yeni randevu olustugunda ilgili personelin kayitli cihazlarina Web Push gonderir.
 // public.appointments uzerindeki trigger tarafindan pg_net ile cagrilir.
 //
 // Gerekli Edge Function secret'lari:
@@ -25,7 +25,7 @@ function vapidHazirla() {
 }
 
 const IKON =
-  "https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121";
+  "https://ik.imagekit.io/uiuf7hq8x/Handyystaff.png?updatedAt=1786916778121";
 
 type Randevu = {
   id: string;

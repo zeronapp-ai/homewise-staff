@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+﻿import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -80,12 +80,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Homewise | Personel Paneli" },
+      { title: "Handyy | Personel Paneli" },
       {
         name: "description",
-        content: "Homewise temizlik personeli için gelir, randevu ve izin takip paneli.",
+        content: "Handyy temizlik personeli için gelir, randevu ve izin takip paneli.",
       },
-      { property: "og:title", content: "Homewise | Personel Paneli" },
+      { property: "og:title", content: "Handyy | Personel Paneli" },
       {
         property: "og:description",
         content: "Gelir, komisyon, randevu ve izin yönetimi tek uygulamada.",
@@ -95,7 +95,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#D7263D" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "Homewise" },
+      { name: "apple-mobile-web-app-title", content: "Handyy" },
       { name: "mobile-web-app-capable", content: "yes" },
     ],
     links: [

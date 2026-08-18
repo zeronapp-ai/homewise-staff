@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+﻿import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import {
   ArrowLeft,
@@ -15,13 +15,13 @@ import { useAuth } from "@/lib/auth-context";
 export const Route = createFileRoute("/takvim")({
   head: () => ({
     meta: [
-      { title: "Takvim | Homewise" },
+      { title: "Takvim | Handyy" },
       {
         name: "description",
         content:
           "Aylık takvimden randevulu günlerinizi görün ve müsait olmadığınız günler için izin işaretleyin.",
       },
-      { property: "og:title", content: "Takvim | Homewise" },
+      { property: "og:title", content: "Takvim | Handyy" },
       {
         property: "og:description",
         content: "İzin günlerinizi takvimden işaretleyin.",

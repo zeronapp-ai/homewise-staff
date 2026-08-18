@@ -1,7 +1,7 @@
 {
-  "name": "Homewise - Staff Panel",
-  "short_name": "Homewise",
-  "description": "Homewise cleaning staff earnings and appointment management panel",
+  "name": "Handyy - Staff Panel",
+  "short_name": "Handyy",
+  "description": "Handyy staff earnings, appointments and leave management panel",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -24,7 +24,7 @@
   ],
   "screenshots": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><defs><style>.bg{fill:%23FAFAF8}.header{fill:%23D7263D}.text{fill:white;font-size:40;font-weight:bold;text-anchor:middle;dominant-baseline:middle}.cal{fill:%23D7263D}</style></defs><rect class='bg' width='540' height='720'/><rect class='header' y='0' width='540' height='100'/><text x='270' y='50' class='text'>Homewise Panel</text><circle cx='135' cy='380' r='100' class='cal' opacity='0.1'/><rect class='cal' x='80' y='300' width='110' height='140' rx='16' opacity='0.15'/></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><defs><style>.bg{fill:%23FAFAF8}.header{fill:%23D7263D}.text{fill:white;font-size:40;font-weight:bold;text-anchor:middle;dominant-baseline:middle}.cal{fill:%23D7263D}</style></defs><rect class='bg' width='540' height='720'/><rect class='header' y='0' width='540' height='100'/><text x='270' y='50' class='text'>Handyy Panel</text><circle cx='135' cy='380' r='100' class='cal' opacity='0.1'/><rect class='cal' x='80' y='300' width='110' height='140' rx='16' opacity='0.15'/></svg>",
       "sizes": "540x720",
       "type": "image/svg+xml",
       "form_factor": "narrow"
@@ -74,7 +74,7 @@
   "categories": ["productivity", "business"],
   "screenshots_dark": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%23222222' width='540' height='720'/><rect fill='%23D7263D' y='0' width='540' height='100'/><text x='270' y='50' font-size='40' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>Homewise Panel</text></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%23222222' width='540' height='720'/><rect fill='%23D7263D' y='0' width='540' height='100'/><text x='270' y='50' font-size='40' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>Handyy Panel</text></svg>",
       "sizes": "540x720",
       "type": "image/svg+xml",
       "form_factor": "narrow"
