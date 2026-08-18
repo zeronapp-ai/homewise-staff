@@ -1,5 +1,5 @@
 ﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertCircle } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -31,6 +31,15 @@ function Login() {
       setError(err.message || "Giriş başarısız. Lütfen bilgilerinizi kontrol edin.");
     }
   };
+
+  // SSR hydration mismatch için: form event listener'ı client-side attach et
+  useEffect(() => {
+    const form = document.querySelector("form");
+    if (form) {
+      form.addEventListener("submit", handleSubmit as any);
+      return () => form.removeEventListener("submit", handleSubmit as any);
+    }
+  }, [email, password, handleSubmit]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-primary-foreground p-4">
