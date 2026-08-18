@@ -53,54 +53,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       if (!email || !password) {
-        throw new Error("Email ve şifre gerekli");
+        throw new Error("Email ve şifre gereklidir");
       }
 
       // Şifreyi hash'le
       const passwordHash = await hashPassword(password);
 
-      // Önce Supabase'den verileri çek
-      let staffData: any = null;
-      try {
-        const { data: panel, error: panelError } = await supabase
-          .from("staff_panels")
-          .select("*")
-          .eq("email", email)
-          .single();
+      // staff_panels'ten email ile ara
+      const { data: panelList, error: panelError } = await supabase
+        .from("staff_panels")
+        .select("*")
+        .eq("email", email)
+        .limit(1);
 
-        if (!panelError && panel) {
-          // Şifreyi kontrol et
-          if (panel.password_hash !== passwordHash) {
-            throw new Error("Giriş bilgileri yanlış");
-          }
-
-          // Panel aktif mi kontrol et
-          if (!panel.is_active) {
-            throw new Error("Bu panel pasifleştirilmiştir");
-          }
-
-          // Personel verilerini çek
-          const { data: staff, error: staffError } = await supabase
-            .from("staff")
-            .select("*")
-            .eq("id", panel.staff_id)
-            .single();
-
-          if (!staffError && staff) {
-            staffData = staff;
-          }
-        }
-      } catch (dbError) {
-        console.log("Database error, trying fallback...");
+      if (panelError && panelError.code !== 'PGRST116') {
+        throw new Error("Veritabanı hatası: " + panelError.message);
       }
 
-      // Eğer database'den veri çekilemediyse hata fırla
-      if (!staffData) {
-        throw new Error("Giriş bilgileri yanlış");
+      if (!panelList || panelList.length === 0) {
+        throw new Error("Bu email ile kayıtlı panel bulunamadı");
+      }
+
+      const panel = panelList[0];
+
+      // Şifreyi kontrol et
+      if (panel.password_hash !== passwordHash) {
+        throw new Error("Şifre hatalı");
+      }
+
+      // Panel aktif mi kontrol et
+      if (!panel.is_active) {
+        throw new Error("Bu panel pasifleştirilmiştir");
+      }
+
+      // Personel verilerini çek
+      const { data: staffData, error: staffError } = await supabase
+        .from("staff")
+        .select("*")
+        .eq("id", panel.staff_id)
+        .single();
+
+      if (staffError) {
+        throw new Error("Personel bilgileri bulunamadı");
       }
 
       if (!staffData) {
-        throw new Error("Giriş bilgileri yanlış");
+        throw new Error("Personel kaydı sililinmiş olabilir");
       }
 
       setStaff(staffData as Staff);
