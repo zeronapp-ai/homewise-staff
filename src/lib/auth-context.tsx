@@ -59,49 +59,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Şifreyi hash'le
       const passwordHash = await hashPassword(password);
 
-      // staff_panels'ten email ile ara
-      const { data: panelList, error: panelError } = await supabase
-        .from("staff_panels")
-        .select("*")
-        .eq("email", email)
-        .limit(1);
+      // DIKKAT: staff_panels'i buradan dogrudan okuyamayiz; RLS SELECT politikasi
+      // auth.uid() istiyor ve bu panel Supabase Auth kullanmiyor. Dogrulama
+      // staff_login (SECURITY DEFINER) fonksiyonu icinde yapiliyor.
+      const { data, error } = await supabase.rpc("staff_login", {
+        p_email: email.trim(),
+        p_password_hash: passwordHash,
+      });
 
-      if (panelError && panelError.code !== 'PGRST116') {
-        throw new Error("Veritabanı hatası: " + panelError.message);
+      if (error) {
+        throw new Error("Sunucuya ulaşılamadı: " + error.message);
       }
 
-      if (!panelList || panelList.length === 0) {
-        throw new Error("Bu email ile kayıtlı panel bulunamadı");
+      const sonuc = data as { status: string; staff?: Staff } | null;
+
+      if (!sonuc) {
+        throw new Error("Sunucudan yanıt alınamadı");
       }
 
-      const panel = panelList[0];
+      if (sonuc.status === "not_found") {
+        throw new Error("Bu e-posta ile kayıtlı panel bulunamadı");
+      }
 
-      // Şifreyi kontrol et
-      if (panel.password_hash !== passwordHash) {
+      if (sonuc.status === "wrong_password") {
         throw new Error("Şifre hatalı");
       }
 
-      // Panel aktif mi kontrol et
-      if (!panel.is_active) {
-        throw new Error("Bu panel pasifleştirilmiştir");
+      if (sonuc.status === "inactive") {
+        throw new Error("Bu panel pasifleştirilmiş. Yöneticiyle görüşün.");
       }
 
-      // Personel verilerini çek
-      const { data: staffData, error: staffError } = await supabase
-        .from("staff")
-        .select("*")
-        .eq("id", panel.staff_id)
-        .single();
-
-      if (staffError) {
-        throw new Error("Personel bilgileri bulunamadı");
+      if (sonuc.status === "no_staff") {
+        throw new Error("Panele bağlı personel kaydı bulunamadı");
       }
 
-      if (!staffData) {
-        throw new Error("Personel kaydı sililinmiş olabilir");
+      if (sonuc.status !== "ok" || !sonuc.staff) {
+        throw new Error("Giriş başarısız (beklenmeyen yanıt: " + sonuc.status + ")");
       }
 
-      setStaff(staffData as Staff);
+      const staffData = sonuc.staff;
+
+      setStaff(staffData);
       sessionStorage.setItem('staff_session', JSON.stringify({ staffId: staffData.id, email, staff: staffData }));
     } catch (error: any) {
       throw new Error(error.message || "Giriş başarısız");
