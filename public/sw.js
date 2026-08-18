@@ -1,4 +1,12 @@
-const CACHE_NAME = 'handyy-cache-v4';
+const CACHE_NAME = 'handyy-cache-v5';
+
+// DIKKAT: Basarisiz yanitlar ASLA onbellege alinmamali. Deploy penceresinde bir
+// varlik anlik 404 donebiliyor; cache-first strateji bu 404'u kalici hale
+// getiriyor, boylece uygulama o cihazda bir daha hic acilmiyordu (JS paketleri
+// 404 -> React hic yuklenmiyor -> form native submit yapiyor).
+function onbellegeAlinabilir(response) {
+  return !!response && response.status === 200 && response.type !== 'opaque';
+}
 const IKON = 'https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121';
 
 // DIKKAT: Burada olmayan bir adres birakma. cache.addAll tek bir istek bile
@@ -91,10 +99,12 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
+          if (onbellegeAlinabilir(response)) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
           return response;
         })
         .catch(() => {
@@ -110,8 +120,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          const kopya = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, kopya));
+          if (onbellegeAlinabilir(response)) {
+            const kopya = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, kopya));
+          }
           return response;
         })
         .catch(() =>
@@ -125,14 +137,17 @@ self.addEventListener('fetch', (event) => {
     // Hash'li statik dosyalar degismez, cache-first uygun
     event.respondWith(
       caches.match(event.request).then((response) => {
-        if (response) {
+        // Onbellekte hatali bir yanit kalmissa ona guvenme, agdan tazele.
+        if (response && response.status === 200) {
           return response;
         }
         return fetch(event.request).then((response) => {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
+          if (onbellegeAlinabilir(response)) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
           return response;
         });
       })
