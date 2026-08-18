@@ -7,6 +7,34 @@ const CACHE_NAME = 'handyy-cache-v5';
 function onbellegeAlinabilir(response) {
   return !!response && response.status === 200 && response.type !== 'opaque';
 }
+
+function ayniKaynak(request) {
+  try {
+    return new URL(request.url).origin === self.location.origin;
+  } catch (e) {
+    return false;
+  }
+}
+
+// DIKKAT: Sorun yalnizca bu service worker'in onbelleginde degil, TARAYICININ
+// KENDI HTTP onbelleginde de olusabiliyor. Deploy aninda donen 404, /assets/*
+// icin gonderilen "immutable" basligiyla birlikte diske yazilinca ayni URL
+// aylarca 404 donmeye devam ediyor ve uygulama o cihazda hic acilmiyor.
+// Ayni istegi bir kez cache:'reload' ile tekrarlamak hem dogru yaniti getiriyor
+// hem de zehirlenmis kaydin uzerine yaziyor; boylece cihaz kendi kendine
+// toparliyor.
+function zehirliOnbellegiTazele(request) {
+  return fetch(request.url, { cache: 'reload', credentials: 'same-origin' });
+}
+
+function agdanGetir(request) {
+  return fetch(request).then((response) => {
+    if (onbellegeAlinabilir(response) || !ayniKaynak(request)) {
+      return response;
+    }
+    return zehirliOnbellegiTazele(request).catch(() => response);
+  });
+}
 const IKON = 'https://ik.imagekit.io/uiuf7hq8x/homewisestaff.png?updatedAt=1786916778121';
 
 // DIKKAT: Burada olmayan bir adres birakma. cache.addAll tek bir istek bile
@@ -118,7 +146,7 @@ self.addEventListener('fetch', (event) => {
     // HTML kabugunu sonsuza kadar servis eder, o da eski hash'li paketleri
     // cagirir ve kullanici yeni surumu hic goremez.
     event.respondWith(
-      fetch(event.request)
+      agdanGetir(event.request)
         .then((response) => {
           if (onbellegeAlinabilir(response)) {
             const kopya = response.clone();
@@ -141,7 +169,7 @@ self.addEventListener('fetch', (event) => {
         if (response && response.status === 200) {
           return response;
         }
-        return fetch(event.request).then((response) => {
+        return agdanGetir(event.request).then((response) => {
           if (onbellegeAlinabilir(response)) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
