@@ -106,7 +106,7 @@ function Profil() {
                 <p className="flex items-center justify-center gap-1.5 text-lg font-bold">
                   <BriefcaseBusiness className="h-4 w-4 text-primary" /> {staff.completed_jobs}
                 </p>
-                <p className="mt-1 text-[11px] text-muted-foreground">Tamamlanan iş</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">Alınan iş</p>
               </div>
               <div className="rounded-xl bg-surface p-4 text-center">
                 <p className="flex items-center justify-center gap-1 text-lg font-bold">
