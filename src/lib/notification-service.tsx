@@ -222,19 +222,42 @@ async function pushAboneligiKurIc(staffId: number): Promise<PushDurumu> {
       return { ok: false, sebep: "Abonelik anahtarlari okunamadi" };
     }
 
-    const { error } = await supabase.from("push_subscriptions").upsert(
-      {
-        staff_id: staffId,
-        endpoint: abonelik.endpoint,
-        p256dh,
-        auth,
-        user_agent: navigator.userAgent,
-        last_seen_at: new Date().toISOString(),
-      },
-      { onConflict: "endpoint" }
-    );
+    // DIKKAT: Buraya dogrudan tabloya upsert atilmamali. Ayni telefonda ikinci
+    // bir personel bildirimleri actiginda pushManager AYNI endpoint'i donuyor;
+    // satir hala onceki personelin oldugu icin upsert INSERT degil UPDATE
+    // yoluna dusuyor ve RLS'in USING kosulu MEVCUT satirda patliyordu
+    // ("new row violates row-level security policy (using expression)").
+    //
+    // Yazmayi, kimligi x-staff-token'dan cozen ve cihazi yeni personele
+    // devreden push_aboneligi_kaydet fonksiyonu yapiyor. Fonksiyona staff_id
+    // GECIRILMIYOR; gecirilseydi herkes baskasinin cihazini kendi ustune
+    // kaydedebilirdi.
+    const { data: yanit, error } = await supabase.rpc("push_aboneligi_kaydet", {
+      p_endpoint: abonelik.endpoint,
+      p_p256dh: p256dh,
+      p_auth: auth,
+      p_user_agent: navigator.userAgent,
+    });
 
     if (error) return { ok: false, sebep: `Veritabanina yazilamadi: ${error.message}` };
+
+    const sonuc = yanit as { status?: string; staff_id?: number } | null;
+
+    if (sonuc?.status === "no_session") {
+      return { ok: false, sebep: "Oturum anahtari gecersiz veya suresi dolmus, cikip tekrar giris yap" };
+    }
+    if (sonuc?.status !== "ok") {
+      return { ok: false, sebep: `Cihaz kaydedilemedi (${sonuc?.status ?? "beklenmeyen yanit"})` };
+    }
+    // Token baska bir personele aitse ekranda gorunen kisi ile cihaza bildirim
+    // gidecek kisi birbirini tutmuyor demektir; sessizce gecilmemeli.
+    if (typeof sonuc.staff_id === "number" && sonuc.staff_id !== staffId) {
+      return {
+        ok: false,
+        sebep: `Oturum baska bir personele ait (${sonuc.staff_id}), cikip tekrar giris yap`,
+      };
+    }
+
     return { ok: true };
   } catch (e) {
     console.error("Push aboneligi kurulamadi:", e);
