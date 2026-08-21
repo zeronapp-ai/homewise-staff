@@ -96,6 +96,8 @@ function Bildirimler() {
   const [notificationStatus, setNotificationStatus] = useState<'default' | 'granted' | 'denied'>('default');
   const [iosKurulumGerek, setIosKurulumGerek] = useState(false);
   const [pushDurum, setPushDurum] = useState<PushDurumu | null>(null);
+  const [izinIsteniyor, setIzinIsteniyor] = useState(false);
+  const [kapatmaNotu, setKapatmaNotu] = useState(false);
   const okunmamis = liste.filter((b) => !b.okundu).length;
 
   // Izin durumunu oku. Izin istemeyi NotificationService (root) yonetiyor,
@@ -123,15 +125,49 @@ function Bildirimler() {
     }
   }, [staff]);
 
-  const requestNotificationPermission = async () => {
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      setNotificationStatus(permission as any);
-      // Izin verilir verilmez cihazi push'a abone et, uygulama kapaliyken de bildirim gelsin
-      if (permission === 'granted' && staff) {
-        setPushDurum(await pushAboneligiKur(staff.id));
-      }
+  // Switch acildiginda: once tarayici iznini iste, izin gelirse cihazi push'a
+  // abone et. Personel bildirimleri acmayi unutmasin diye switch her zaman
+  // ekranda duruyor; kapali oldugu surece de goze carpiyor.
+  const bildirimleriAc = async () => {
+    if (!('Notification' in window)) {
+      setPushDurum({ ok: false, sebep: 'Bu tarayıcı bildirim API’sini desteklemiyor' });
+      return;
     }
+
+    setIzinIsteniyor(true);
+    try {
+      // DIKKAT: Izin daha once "denied" yapildiysa tarayici yeni bir sorma
+      // penceresi ACMAZ, aninda "denied" doner. Bu durumda kullaniciyi tarayici
+      // ayarlarina yonlendirmek disinda yapabilecegimiz bir sey yok.
+      const izin = await Notification.requestPermission();
+      setNotificationStatus(izin as any);
+
+      if (izin === 'granted' && staff) {
+        // Izin verilir verilmez cihazi push'a abone et, uygulama kapaliyken de bildirim gelsin
+        setPushDurum(await pushAboneligiKur(staff.id));
+      } else {
+        setPushDurum({
+          ok: false,
+          sebep:
+            izin === 'denied'
+              ? 'Bildirim izni reddedilmiş — tarayıcı ayarlarından “İzin ver” yapman gerekiyor'
+              : `Bildirim izni verilmedi (${izin})`,
+        });
+      }
+    } finally {
+      setIzinIsteniyor(false);
+    }
+  };
+
+  const switchDegistir = () => {
+    // Verilmis bir izni koddan geri alamayiz; kapatma yalnizca tarayici
+    // ayarlarindan yapilabiliyor, bunu kullaniciya soyluyoruz.
+    if (notificationStatus === 'granted') {
+      setKapatmaNotu(true);
+      return;
+    }
+    setKapatmaNotu(false);
+    void bildirimleriAc();
   };
 
   useEffect(() => {
@@ -260,22 +296,63 @@ function Bildirimler() {
                 <li>Bu sayfaya gel ve bildirimlere izin ver</li>
               </ol>
             </div>
-          ) : notificationStatus === 'denied' ? (
-            <div className="mt-3 animate-fade-up rounded-xl bg-destructive-soft p-4 text-xs text-foreground">
-              <p className="font-bold">🔕 Bildirimler engellenmiş</p>
-              <p className="mt-1 text-muted-foreground">
-                Tarayıcı ayarlarından bu site için bildirim iznini “İzin ver” yapman gerekiyor.
-              </p>
-            </div>
-          ) : notificationStatus !== 'granted' ? (
-            <button
-              type="button"
-              onClick={requestNotificationPermission}
-              className="mt-3 animate-fade-up rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
-            >
-              🔔 Bildirimleri Aç
-            </button>
-          ) : null}
+          ) : (
+            <>
+              <div className="mt-3 flex animate-fade-up items-center justify-between gap-4 rounded-xl bg-surface p-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-foreground">Bildirimleri aç</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    {izinIsteniyor
+                      ? 'Cihaz kaydediliyor…'
+                      : notificationStatus === 'granted'
+                        ? 'Yeni randevu geldiğinde bildirim alırsın'
+                        : 'Kapalı — yeni randevuları kaçırabilirsin'}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={notificationStatus === 'granted'}
+                  aria-label="Bildirimleri aç"
+                  disabled={izinIsteniyor}
+                  onClick={switchDegistir}
+                  className={
+                    'relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-60 ' +
+                    (notificationStatus === 'granted' ? 'bg-success' : 'bg-border')
+                  }
+                >
+                  <span
+                    className={
+                      'absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ' +
+                      (notificationStatus === 'granted' ? 'left-6' : 'left-1')
+                    }
+                  />
+                </button>
+              </div>
+
+              {notificationStatus === 'denied' && (
+                <div className="mt-3 animate-fade-up rounded-xl bg-destructive-soft p-4 text-xs text-foreground">
+                  <p className="font-bold">🔕 Bildirimler engellenmiş</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Tarayıcı bu site için izni daha önce reddettiğinden switch'i açmak yeni
+                    bir izin penceresi açamıyor. Tarayıcı ayarlarından bu site için bildirim
+                    iznini “İzin ver” yapman gerekiyor.
+                  </p>
+                </div>
+              )}
+
+              {kapatmaNotu && (
+                <div className="mt-3 animate-fade-up rounded-xl bg-primary-soft p-4 text-xs text-foreground">
+                  <p className="font-bold">Bildirimler zaten açık</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Kapatmak için tarayıcı ayarlarından bu sitenin bildirim iznini kaldırman
+                    gerekiyor; uygulama verilmiş bir izni kendi başına geri alamıyor.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
 
           {pushDurum && (
             <div
